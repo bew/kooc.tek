@@ -1,0 +1,27 @@
+@import "Test.kh"
+
+int	main()
+{
+  int	res_int;
+  float	res_float;
+
+  [Test f];				/* void f() */
+  [Test f :42];				/* void f(int foo) */
+  [Test f :42.0];			/* void f(float bar) */
+  [Test f :42 :[Test.a]];		/* void f(int foo, float bar) */
+  [Test f :42.0 :[Test.a]];		/* void f(float bar, int foo) */
+
+  res_int = [Test f];			/* int f() */
+  res_int = [Test f :42];		/* int f(int foo) */
+  res_int = [Test f :42.0];		/* int f(float bar) */
+  res_int = [Test f :42 :[Test.a]];	/* int f(int foo, float bar) */
+  res_int = [Test f :42.0 :[Test.a]];	/* int f(float bar, int foo) */
+
+  res_float = [Test f];			/* float f() */
+  res_float = [Test f :42];		/* float f(float foo) */
+  res_float = [Test f :42.0];		/* float f(float bar) */
+  res_float = [Test f :42 :[Test.a]];	/* float f(float foo, float bar) */
+  res_float = [Test f :42.0 :[Test.a]];	/* float f(float bar, float foo) */
+
+  return 0;
+}

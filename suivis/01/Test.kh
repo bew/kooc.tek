@@ -1,0 +1,49 @@
+#define MAXBUF 4200 /* On doit appliquer cpp sur le code avant */
+
+/* Le code C reste intouché */
+typedef struct	test_s
+{
+  int		size;
+  char		st[MAXBUF];
+}		test_t;
+
+static inline test_t	*test_new(char *str)
+{
+  test_t		*test;
+  
+  if (!str)
+    return (0);
+  test = calloc(1, sizeof (test_t));
+  test->size = strlen(str) > MAXBUF ? MAXBUF : strlen(str);
+  memcpy(test->st, str, test->size);
+  return (test);
+}
+
+static inline void	test_print(test_t *test)
+{
+  printf("%s", test->st);
+}
+
+@module		Test
+{
+  /* Variables relatif au module avec polymorphisme */
+  int		a;
+  char		a = 'a';
+  float		a = 42.0;
+  double	a;
+
+  /* Les variables statiques ne sont appellable que depuis l'intérieur du module */
+  static char	b = 'b';
+  static float	b = 21.0;
+
+  /* Fonctions relatif au module avec polymorphisme sur paramètre et retour de fonction */
+  int		f(int foo, float bar);
+  float		f(int foo, float bar);
+  void		f(const int *foo, const float *bar);
+  float		f(int foo);
+  float		f(float bar);
+  int		f(float bar);
+  int		f(int foo);
+  void		f(int *foo);
+  void		f(float *bar);
+}

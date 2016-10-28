@@ -1,0 +1,29 @@
+import "TestA.kh"
+
+@class	TestB : TestA
+{  
+  /* Member attributes */
+  @member int	secret;
+  @member float	useless;
+
+  @virtual char	*get_class_name(TestB *);
+
+  /* Some member functions for coplien form */
+  @member void	init(int value_int, float value_float);
+  void		init(TestB *, float value_float, int value_int);
+  
+  /* ! Polymorphism works also with member ! */
+  
+  /* Class attributes */
+  int		value = 42;
+  float		value = 42.0;
+  int		secret = 42;
+
+  /* Class functions */
+  int		get_value();
+  float		get_value();
+  void		set_value(int value);
+  void		set_value(float value);
+  char		*get_class_name();
+  void		generate_new_secret();
+}

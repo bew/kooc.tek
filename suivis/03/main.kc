@@ -1,0 +1,63 @@
+@import "TestA.kh"
+@import "TestB.kh"
+#include "stdio.h"
+
+int	main()
+{
+  int	res_int;
+  float	res_float;
+  TestA	testA1;
+  TestA	*testA2;
+  TestA	*testA3;
+  TestA	*testA4;
+  TestB testB1;
+  TestB	*testB2;
+  TestB	*testB3;
+  TestB	*testB4;
+
+  res_int = [testA1 get_value];
+  res_float = [testA1 get_value];
+  [testA1 set_value :21];
+  [testA1 set_value :21.0];
+  [testA1.secret = 21];
+  printf("Class name : %s\n", [testA1 get_class_name]);
+
+  testA2 = [TestA alloc];
+  testA3 = [TestA new :res_int :res_float];
+  testA4 = [TestA new :res_float :res_int];
+  [testA2 delete];
+  [testA3 delete];
+  [testA4 delete];
+
+  res_int = [TestA get_value];
+  res_float = [TestA get_value];
+  [TestA set_value :21];
+  [TestA set_value :21.0];
+  [TestA get_class_name];
+  [TestA.secret = 21];
+  printf("Class name : %s\n", [TestA get_class_name]);
+
+  res_int = [testB1 get_value];
+  res_float = [testB1 get_value];
+  [testB1 set_value :21];
+  [testB1 set_value :21.0];
+  [testB1.secret = 21];
+  printf("Class name : %s\n", [testB1 get_class_name]);
+
+  testB2 = [TestB alloc];
+  testB3 = [TestB new :res_int :res_float];
+  testB4 = [TestB new :res_float :res_int];
+  [testB2 delete];
+  [testB3 delete];
+  [testB4 delete];
+
+  res_int = [TestB get_value];
+  res_float = [TestB get_value];
+  [TestB set_value :21];
+  [TestB set_value :21.0];
+  [TestB get_class_name];
+  [TestB.secret = 21];
+  printf("Class name : %s\n", [TestB get_class_name]);
+  
+  return 0;
+}

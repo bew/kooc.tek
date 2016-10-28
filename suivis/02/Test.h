@@ -1,0 +1,35 @@
+#ifndef TEST_H_
+# define TEST_H_
+
+typedef struct	kooc_s_Test {
+  int		A_BEG_n_W_H_BEG_o___END_END_MODULE_4_Test_5_value;
+  float		A_BEG_n_W_M_BEG_o___END_END_MODULE_4_Test_5_value;
+  int		A_BEG_n_W_H_BEG_o___END_END_MODULE_4_Test_6_secret;
+}		Test;
+
+int		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_f_W_H_BEG_o___END_END_MODULE_4_Test_9_get_value(Test *);
+float		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_f_W_M_BEG_o___END_END_MODULE_4_Test_9_get_value(Test *);
+void		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_n_W_H_BEG_o___END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_9_set_value(Test *, int value);
+void		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_n_W_M_BEG_o___END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_9_set_value(Test *, float value);
+char		*A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_f_W_D_BEG_p__BEG_o___END_END_END_MODULE_4_Test_14_get_class_name(Test *)
+void		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_19_generate_new_secret(Test *);
+
+void		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_n_W_H_BEG_o___END_END_BEG_n_W_M_BEG_o___END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_4_init(Test *, int value_int, float value_float);
+void		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_n_W_M_BEG_o___END_END_BEG_n_W_H_BEG_o___END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_4_init(Test *, float value_float, int value_int);
+
+void		A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_4_init(Test *this);
+Test		*A_BEG_f_T_4_Test_BEG_p__BEG_o___END_END_END_MODULE_4_Test_5_alloc();
+Test		*A_BEG_n_W_H_BEG_o___END_END_BEG_n_W_M_BEG_o___END_END_BEG_f_T_4_Test_BEG_p__BEG_o___END_END_END_MODULE_4_Test_3_new(int res_int, float res_float);
+Test		*A_BEG_n_W_M_BEG_o___END_END_BEG_n_W_H_BEG_o___END_END_BEG_f_T_4_Test_BEG_p__BEG_o___END_END_END_MODULE_4_Test_3_new(float res_float, int res_int);
+void		*A_BEG_n_T_4_Test_BEG_p__BEG_o___END_END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_6_delete(Test *Test);
+
+extern int	A_BEG_n_W_H_BEG_o___END_END_MODULE_4_Test_6_secret;
+
+int		A_BEG_f_W_H_BEG_o___END_END_MODULE_4_Test_9_get_value();
+float		A_BEG_f_W_M_BEG_o___END_END_MODULE_4_Test_9_get_value();
+void		A_BEG_n_W_H_BEG_o___END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_9_set_value(int value);
+void		A_BEG_n_W_M_BEG_o___END_END_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_9_set_value(float value);
+char		*A_BEG_f_W_D_BEG_p__BEG_o___END_END_END_MODULE_4_Test_14_get_class_name();
+static void	S_BEG_f_W_X_BEG_o___END_END_MODULE_4_Test_19_generate_new_secret();
+
+#endif /* !TEST_H_ */

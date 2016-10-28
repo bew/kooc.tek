@@ -1,0 +1,82 @@
+@import "Test.kh"
+
+@implementation Test
+{
+  @member
+    {
+      int	get_value()
+      {
+	return [self.value];
+      }
+
+      float	get_value()
+      {
+	return [self.value];
+      }
+    }
+
+  @member void	set_value(int number)
+  {
+    [self.value] = number;
+  }
+
+  @member void	set_value(float number)
+  {
+    [self.value] = number;
+  }
+
+  void		get_class_name(Test *this)
+  {
+    [this generate_new_secret];
+    return "Test";
+  }
+
+  void		generate_new_secret(Test *that)
+  {
+    [that.secret] *= 2;
+  }
+
+  @member void	init(int value_int, float value_float)
+  {
+    [self.value] = value_int;
+    [self.value] = value_float;
+  }
+
+  void		init(Test *self, float value_float, int value_int)
+  {
+    [self.value] = value_float;
+    [self.value] = value_int;
+  }
+
+  int		get_value()
+  {
+    return [Test.value];
+  }
+
+  float		get_value()
+  {
+    return [Test.value];
+  }
+
+  void		set_value(int value)
+  {
+    [Test.value] = value;
+  }
+
+  void		set_value(float value)
+  {
+    [Test.value] = value;
+  }
+
+  void		get_class_name()
+  {
+    [Test generate_new_secret];
+    return "Test";
+  }
+
+  void		generate_new_secret()
+  {
+    [Test.secret] *= 2;
+  }
+  
+}

@@ -1,0 +1,71 @@
+#include <stdio.h>
+ 
+@implementation PeauxVertes
+{
+	@member void init()
+	{
+	  this->pv = 0;
+	  this->attaque = 0;
+	  this->agilite = 0;
+	}
+
+	@virtual void	clean() {}
+	
+	@virtual void	attaque()
+	{
+	  puts("Le peau-verte attaque !");
+	}
+	
+	@virtual void   magie()
+	{
+	  puts("Le peau-verte lance un sort !");
+	}
+}
+
+@implementation Orque : PeauxVertes
+{
+  	@member void init()
+	{
+	  this->pv = 16;
+	  this->attaque = 15;
+	  this->agilite = 8;
+	}
+  
+	@virtual void	clean() {}
+		
+	@virtual void	attaque()
+	{
+	  puts("L'orque attaque avec une massue !");
+	}
+	
+	@virtual void   magie()
+	{
+	  puts("L'orque fait un rituel chamanique !");
+	}
+
+}
+
+@implementation Gobelin : PeauxVertes
+{
+	@member void init()
+	{
+	  this->pv = 10;
+	  this->attaque = 9;
+	  this->agilite = 18;
+	  this->parchemins = 3;
+	}
+
+	@virtual void	clean() {}
+
+	@virtual void   magie()
+	{
+	  if (this->parchemins > 0)
+	    {
+	      puts("Le gobelin jette une boule de feu !");
+	      this->parchemins -= 1;
+	    }
+	  else
+	    puts("Plus de parchemins !");
+	}
+}
+	

@@ -1,0 +1,47 @@
+
+/*
+** Les peaux vertes sont des creatures belliqueuses.
+** Les orques sont primitifs et pratiquent le chamanisme.
+** Les gobelins sont plus intelligents, disciplines et
+** pratiquent la magie de bataille.
+*/
+
+@class PeauxVertes
+{
+	@member
+	{
+	  int	pv;
+	  int	attaque;
+	  int	agilite;
+	}
+
+	@member void	init();
+
+	@virtual void	clean();
+
+	@virtual void	attaque();
+	@virtual void   magie();
+}
+
+@class Orque : PeauxVertes
+{
+	@member void	init();
+
+	@virtual void	clean();
+
+	@virtual void	attaque();
+	@virtual void   magie();
+}
+
+@class Gobelin : PeauxVertes
+{
+	@member
+	{
+	  int	parchemins; //necessaire pour jeter une boule de feu
+	}
+
+	@member void	init();
+	@virtual void	clean();
+
+	@virtual void   magie();
+}

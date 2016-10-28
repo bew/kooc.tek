@@ -1,0 +1,52 @@
+@import "TestB.kh"
+
+@implementation TestB
+{
+  @virtual char	*get_class_name(TestB *this)
+  {
+    [this generate_new_secret];
+    return "TestB";
+  }
+
+  @member void		init(int value_int, float value_float)
+  {
+    [super init :value_int :value_float];
+  }
+
+  void			init(TestB *self, float value_float, int value_int)
+  {
+    [super init :value_float :value_int];
+  }
+
+  int		get_value()
+  {
+    return [TestB.value];
+  }
+
+  float		get_value()
+  {
+    return [TestB.value];
+  }
+
+  void		set_value(int value)
+  {
+    [TestB.value] = value;
+  }
+
+  void		set_value(float value)
+  {
+    [TestB.value] = value;
+  }
+
+  char		*get_class_name()
+  {
+    [TestB generate_new_secret];
+    return "TestB";
+  }
+
+  void	generate_new_secret()
+  {
+    [TestB.secret] *= 2;
+  }
+  
+}

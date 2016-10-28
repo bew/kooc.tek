@@ -1,0 +1,87 @@
+@implementation	Test
+{ 
+  void	f()
+  {
+    printf("void f()\n");
+  }
+  
+  void	f(int foo)
+  {
+    printf("void f(int foo)\n");
+  }
+  
+  void	f(float bar)
+  {
+    printf("void f(float bar)\n");
+  }
+  
+  void	f(int foo, float bar)
+  {
+    printf("void f(int floo, float bar)\n");
+  }
+  
+  void	f(float bar, int foo)
+  {
+    printf("void f(float bar, int foo)\n");
+  }
+  
+  int	f()
+  {
+    printf("int f()\n");
+    return [Test.a];
+  }
+  
+  int	f(int foo)
+  {
+    printf("int f(int foo)\n");
+    return foo;
+  }
+  
+  int	f(float bar)
+  {
+    printf("int f(float bar)\n");
+    return bar;
+  }
+  
+  int	f(int foo, float bar)
+  {
+    printf("int f(int floo, float bar)\n");
+    return foo + ((int)bar);
+  }
+  
+  int	f(float bar, int foo)
+  {
+    printf("int f(float bar, int foo)\n");
+    return ((int)bar) + foo;
+  }
+
+  float	f()
+  {
+    printf("float f()\n");
+    return [Test.a];
+  }
+  
+  float	f(int foo)
+  {
+    printf("float f(int foo)\n");
+    return ((float)foo);
+  }
+  
+  float	f(float bar)
+  {
+    printf("float f(float bar)\n");
+    return bar;
+  }
+  
+  float	f(int foo, float bar)
+  {
+    printf("float f(int floo, float bar)\n");
+    return ((float)foo) + bar;
+  }
+  
+  float	f(float bar, int foo)
+  {
+    printf("float f(float bar, int foo)\n");
+    return bar + ((float)foo);
+  }
+}

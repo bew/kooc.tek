@@ -1,0 +1,52 @@
+/* Gestion des import multiples */
+@import "Test.kh"
+@import "Test.kh" /* Gestion des commentaires en C */
+@import "Test.kh" // Gestion des commentaires C++
+
+@implementation Test
+{
+  int	f(int foo, float bar)
+  {
+    return foo+((int)bar);
+  }
+
+  float	f(int foo, float bar)
+  {
+    return ((float)foo)+bar;
+  }
+
+  void	f(const int *foo, const float *bar)
+  {
+    printf("int: %i && float: %f\n", *foo, *bar);
+  }
+
+  float	f(int foo)
+  {
+    return (float)foo;
+  }
+
+  float	f(float bar)
+  {
+    return bar;
+  }
+
+  int	f(float bar)
+  {
+    return (int)bar;
+  }
+
+  int	f(int foo)
+  {
+    return foo;
+  }
+
+  void	f(int *foo)
+  {
+    *foo = [Test.b];		/* Cast implicite */
+  }
+
+  void	f(float *bar)
+  {
+    *bar = [Test.b];
+  }
+}

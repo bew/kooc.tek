@@ -1,0 +1,36 @@
+@import "Test.kh"
+#include "stdio.h"
+
+int	main()
+{
+  int	res_int;
+  float	res_float;
+  Test	test1;
+  Test	*test2;
+  Test	*test3;
+  Test	*test4;
+
+  res_int = [test1 get_value];
+  res_float = [test1 get_value];
+  [test1 set_value :21];
+  [test1 set_value :21.0];
+  [test1.secret = 21];
+  printf("Class name : %s\n", [test1 get_class_name]);
+
+  test2 = [Test alloc];
+  test3 = [Test new :res_int :res_float];
+  test4 = [Test new :res_float :res_int];
+  [test2 delete];
+  [test3 delete];
+  [test4 delete];
+
+  res_int = [Test get_value];
+  res_float = [Test get_value];
+  [Test set_value :21];
+  [Test set_value :21.0];
+  [Test get_class_name];
+  [Test.secret = 21];
+  printf("Class name : %s\n", [Test get_class_name]);
+  
+  return 0;
+}

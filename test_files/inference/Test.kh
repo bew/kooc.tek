@@ -1,0 +1,23 @@
+@module	Test
+{
+  int	a = 42;
+  float	a = 42.0;
+  
+  void	f();
+  void	f(int foo);
+  void	f(float bar);
+  void	f(int foo, float bar);
+  void	f(float bar, int foo);
+  
+  int	f();
+  int	f(int foo);
+  int	f(float bar);
+  int	f(int foo, float bar);
+  int	f(float bar, int foo);
+  
+  float	f();
+  float	f(int foo);
+  float	f(float bar);
+  float	f(int foo, float bar);
+  float	f(float bar, int foo);
+}

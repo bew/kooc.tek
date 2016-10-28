@@ -1,0 +1,40 @@
+@import "Test.kh"
+
+int		main()
+{
+  /* Partie en C */
+  test_t	*test;
+  char		my_buf[MAXBUF];
+  char		fmt[13];
+
+  test = test_new("KOOC rulez\n");
+  test_print(test);
+  free(test);
+  printf("Tape un truc (c-D pour finir):");
+  sprintf(fmt, "%%%ds", MAXBUF);
+  scanf(fmt, my_buf);
+  test = test_new(my_buf);
+  test_print(test);
+  free(test);
+
+  /* Partie en Kooc */
+  int		foo;
+  float		bar;
+  int		res_int;
+  float		res_float;
+  
+  foo = 21;
+  bar = [Test.a];
+  [Test.a] = foo;
+  res_int = [Test f :foo :bar];
+  res_float = [Test f :foo :bar];
+  [Test f :&foo :&bar];
+  res_float = [Test f :foo];
+  res_float = [Test f :bar];
+  res_int = [Test f :foo];
+  res_int = [Test f :bar];
+  [Test f :&foo];
+  [Test f :&bar]
+  
+  return 0;
+}

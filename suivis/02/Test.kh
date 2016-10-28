@@ -1,0 +1,40 @@
+@class	Test
+{
+  /* Member attributes */
+  @member
+    {
+      int		value = 42;
+      float		value = 42.0;
+    }
+  @member int		secret = 42;
+
+  /* Member functions with the 3 differents syntax */
+  @member
+    {
+      int		get_value();
+      float		get_value();
+    }
+  @member void		set_value(int value);
+  @member void		set_value(float value);
+  void			get_class_name(Test *);
+  void			generate_new_secret(Test *);
+
+  /* Some member functions for coplien form */
+  @member void		init(int value_int, float value_float);
+  void			init(Test *, float value_float, int value_int);
+
+  /* ! Polymorphism works also with member ! */
+  
+  /* Class attributes */
+  static int		value = 42;
+  static float		value = 42.0;
+  int			secret = 42;
+
+  /* Class functions */
+  int			get_value();
+  float			get_value();
+  void			set_value(int value);
+  void			set_value(float value);
+  void			get_class_name();
+  static void		generate_new_secret();
+}
