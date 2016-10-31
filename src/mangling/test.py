@@ -18,10 +18,10 @@ for index, decl in enumerate(ast.body):
     mangled = ""
     try:
         mangled = mangling.mangle(decl, mangling.OriginIsModule, 'DUMMY_MODUL_NAME')._name
-        #unmangled = mangling.unmangle(mangled)
         print(mangled)
-        #print(unmangled)
-        #print(unmangled.decl.to_c())
+        unmangled = mangling.unmangle(mangled)
+        print(unmangled)
+        print(unmangled.decl.to_c())
     except Exception as e:
         print(str(e))
     if index < len(ast.body) - 1:

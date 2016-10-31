@@ -20,6 +20,9 @@ from mangling_symboles import *
 ####  UTILS  ####
 #################
 
+#should qualifier be mangled. Should be an attribute, should have setter
+qualifierInSignature = True
+
 # For use by caller of mangling:                                                                                                                                                            
 OriginIsModule = DECLARATION_FROM_MODULE
 OriginIsClass = DECLARATION_FROM_CLASS
@@ -72,7 +75,7 @@ def _getParams(node):
         return ''
     paramsRaw = [getType(param._ctype) for param in node._params];
     if hasattr(node, '_ellipsis') and node._ellipsis:
-        paramsRaw.append(TYPEFORMATSTRING.format(NODE_PRIMARYTYPE_CHAR, NATIVTYPE_ELLIPSIS, TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')))
+        paramsRaw.append(TYPEFORMATSTRING.format(NODE_PRIMARYTYPE_CHAR, "{}_{}".format(USERTYPE_NATIV, NATIVTYPE_ELLIPSIS), TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')))
     return '_'.join(paramsRaw)
 
 def _getQualifier(node):
@@ -118,8 +121,6 @@ def _getSizeSpecifier(node):
     if hasattr(node, '_specifier'):
         return node._specifier
     return Specifiers.AUTO
-
-# _getNativType, _getComposedType, _getFinalType should be refactored into one func
 
 def _getNativType(node):
     """
@@ -174,20 +175,21 @@ def getType(node):
     Get the mangling string for the node's type
 
     :param node: node whose type will be extracted
-    :type node: cnorm ast node
+    :type node: cnorm ast node        
     :return: mangling expression of node's type
     :rtype: string
     :raises Exception: if node type is unknown
     """
 
     if isinstance(node, QualType):
-        return TYPEFORMATSTRING.format(NODE_QUALTYPE_CHAR, _getQualifier(node), getType(node._decltype))
+        if qualifierInSignature:
+            return TYPEFORMATSTRING.format(NODE_QUALTYPE_CHAR, _getQualifier(node), getType(node._decltype))
+        return getType(node._decltype)
     elif isinstance(node, PointerType):
         return TYPEFORMATSTRING.format(NODE_POINTERTYPE_CHAR, '', getType(node._decltype))
     elif isinstance(node, ArrayType):
         return TYPEFORMATSTRING.format(NODE_ARRAYTYPE_CHAR, '', getType(node._decltype))
     elif isinstance(node, ParenType):
-        # the return type has alredy been mangled, the deeper is parentype specifier, params is params
         return TYPEFORMATSTRING.format(NODE_PARENTYPE_CHAR, _getParams(node), getType(node._decltype))
     elif isinstance(node, FuncType):
         return TYPEFORMATSTRING.format(NODE_FUNCTYPE_CHAR, _getFinalType(node), getType(node._decltype))
@@ -219,7 +221,7 @@ def _getSymbolKind(node):
     else:
         raise Exception('Unexpected storage : {}'.format(node._storage))
     
-def mangle(decl, origin, originName='', virtual=False):
+def mangle(decl, origin=DECLARATION_FROM_MODULE, originName='', virtual=False):
     """
     Altere the declaration name to the declaration mangling string
 
@@ -229,6 +231,10 @@ def mangle(decl, origin, originName='', virtual=False):
     :type origin: value from mangling.OriginIs* (Module, Class, Instance) (ugly but python odesn't provide attribute on object so fuckit atm)
     :param modulName: the name of the module from which decl is from. May be empty if unknown (if mangling out of @import or @implement scope)
     :type modulName: string
+    :param origin: origin of the the decl. Default to DECLARATION_FROM_MODULE
+    :type origin: mangling.DECLARATION_FROM_[MODULE|INSTANCE|OBJECT]
+    :param originName: the name of origin struct. Default to ""
+    :type originNam: string
     :return: mangling expression of node's kind
     :rtype: cnorm ast node, same as the decl parameter
     """
@@ -275,7 +281,7 @@ class Unmangler(grammar.Grammar):
                                 qualType |      
                                 pointerType | 
                                 arrayType | 
-                                parenType | 
+                                parenType |
                                 noneType
                         ]:>_]
 
@@ -296,13 +302,18 @@ class Unmangler(grammar.Grammar):
                                         '_' [nativTypeChar:nativ #setNativType(_, nativ) | identifier:identifier #setUserType(_, identifier)] '_' type:type #setSubtype(_, type)
                                 ]
 
-    qualType =          ["{NODE_QUALTYPE_CHAR}" '_' ["{QUALIFIER_CONST}" | "{QUALIFIER_VOLATILE}"]:>qualifier '_' type:type #createQualType(_, qualifier, type)]
+    qualType =          ["{NODE_QUALTYPE_CHAR}" '_' ["{QUALIFIER_CONST}" | "{QUALIFIER_VOLATILE}"]:qualifier '_' type:type #createQualType(_, qualifier, type)]
 
-    pointerType =       ["{NODE_POINTERTYPE_CHAR}" '__' type:type #createPointeType(_, type)]
+    pointerType =       ["{NODE_POINTERTYPE_CHAR}" '_' '_' type:type #createPointerType(_, type)]
 
-    arrayType =         ["{NODE_ARRAYTYPE_CHAR}" '__' type:type #createArrayType(_, type)]
+    arrayType =         ["{NODE_ARRAYTYPE_CHAR}" '_' '_' type:type #createArrayType(_, type)]
 
-    parenType =         ["{NODE_PARENTYPE_CHAR}" __scope__:params ['_' type:type #addListedType(params, type)]+ '_' #createParentType(_, params)]
+    parenType =         [
+                                "{NODE_PARENTYPE_CHAR}" __scope__:params [
+                                        ['_' '_' type:type #addListedType(params, type)] |
+                                        ['_' type:type #addListedType(params, type)]+
+                                ] #createParenType(_, params)
+                        ]
 
     noneType =          ["{NODE_NONETYPE_CHAR}" '_' '_' #createNoneType(_)]
 
@@ -369,8 +380,10 @@ class Unmangler(grammar.Grammar):
     
 @meta.hook(Unmangler)
 def declRoot(self, ast, kos, params, cname):
-    subType = params.value[-1:][0]
+    subType = params.value[-1:][0]._ctype
     subType._storage = kos.value
+    if params.ellipsis:
+        subType._ellipsis = params.ellipsis
     try:
         subType._params = params.value[:-1]
     except:
@@ -406,6 +419,9 @@ def consumeIdentifier(self, ast, size):
 
 @meta.hook(Unmangler)
 def createPrimaryType(self, ast, opt):
+    if not hasattr(opt, 'identifier'):
+        ast.value = "ellipsis"
+        return True
     ast.value = PrimaryType(opt.identifier)
     ast.value._specifier = opt.specifier
     ast.value._decltype = opt.decltype
@@ -417,7 +433,7 @@ def createPrimaryType(self, ast, opt):
 
 @meta.hook(Unmangler)
 def createComposedType(self, ast, opt):
-    ast.value = PrimaryType(opt.identifier)
+    ast.value = ComposedType(opt.identifier)
     ast.value._specifier = opt.specifier
     ast.value._decltype = opt.decltype
     try:
@@ -428,7 +444,7 @@ def createComposedType(self, ast, opt):
 
 @meta.hook(Unmangler)
 def createFuncType(self, ast, opt):
-    ast.value = PrimaryType(opt.identifier)
+    ast.value = FuncType(opt.identifier)
     ast.value._specifier = opt.specifier
     ast.value._decltype = opt.decltype
     try:
@@ -519,7 +535,10 @@ def createNoneType(self, ast):
 @meta.hook(Unmangler)
 def createParenType(self, ast, params):
     ast.value = ParenType(params.value[:-1])
-    ast.value._decltype = params.value[-1:][0]
+    if params.ellipsis:
+        ast.value._ellipsis = params.ellipsis
+    ast.value._decltype = params.value[-1:][0]._ctype
+    return True
 
 @meta.hook(Unmangler)
 def initParams(self, ast):
@@ -530,14 +549,18 @@ def initParams(self, ast):
 def addListedType(self, typelist, subtype):
     if not hasattr(typelist, "value"):
         typelist.value = []
-    typelist.value.append(subtype.value)
+        typelist.ellipsis = False
+    if subtype.value == "ellipsis":
+        typelist.ellipsis = True
+    else:
+        typelist.value.append(Decl('', subtype.value))
     return True
 
 def unmangle(mangling):
     """
     WIP. Construct an abstract syntax tree from a mangling string
-    Not implemented yet and mey never be.
-    Module name is lost here.
+    Not fully implemented yet.
+    Module name and other meta data are lost here.
 
     :param mangling: the mangling expression. It have to be a valid.
     :type mangling: string (supposed return from mangle function)
