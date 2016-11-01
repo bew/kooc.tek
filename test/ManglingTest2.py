@@ -1,4 +1,4 @@
-#!/usr/bin/env python                                                                        
+#!/usr/bin/env python3                                                                        
 # -*- coding: utf-8 -*-                                                                      
 
 import sys
@@ -17,7 +17,7 @@ class ManglingTest:
     cparse = Declaration()
     okString = '\033[92mPASSED\033[0m'
     failString = '\033[91mFAILED\033[0m'
-    test = {}
+    tests = {}
     
     def add_test(self, test_name, c_string, expected_mangling, origin, origin_name, expected_unmangling = None, context = [], is_virtual = False):
         """ 
@@ -41,9 +41,9 @@ class ManglingTest:
         :type is_virtual: bool
         """
         
-        if test_name in self.test:
+        if test_name in self.tests:
             raise Exception('Test {} has already been added'.format(test_name))
-        self.test[test_name] = {
+        self.tests[test_name] = {
             'c_string': c_string,
             'expected_mangling': expected_mangling,
             'origin': origin,
@@ -52,11 +52,11 @@ class ManglingTest:
             'context': context
         }
         if expected_unmangling != None:
-            self.test[test_name]['expected_unmangling'] = expected_unmangling
+            self.tests[test_name]['expected_unmangling'] = expected_unmangling
 
     def run_all(self):
         """ Run all the test in the pool """
-        for test_name in self.test.keys():
+        for test_name in self.tests.keys():
             self.run(test_name)
            
     def run(self, test_name):
@@ -66,34 +66,34 @@ class ManglingTest:
         :param test_name: a test name already specified to add_test
         :type test_name: string
         """
-        if not (test_name in self.test):
+        if not (test_name in self.tests):
             raise Exception('Test {} does not exist'.format(test_name))
         c_body = ''
-        for context in self.test[test_name]['context']:
+        for context in self.tests[test_name]['context']:
             c_body += context
-        c_body += self.test[test_name]['c_string']
+        c_body += self.tests[test_name]['c_string']
         c_ast = self.cparse.parse(c_body)
-        origin_c_string = c_ast.body[len(self.test[test_name]['context'])].to_c()
+        origin_c_string = c_ast.body[len(self.tests[test_name]['context'])].to_c()
         mangled = ''
         unmangled = ''
         try:
             mangled = mangling.mangle(
-                c_ast.body[len(self.test[test_name]['context'])],
-                self.test[test_name]['origin'],
-                self.test[test_name]['origin_name'],
-                virtual = self.test[test_name]['is_virtual']
+                c_ast.body[len(self.tests[test_name]['context'])],
+                self.tests[test_name]['origin'],
+                self.tests[test_name]['origin_name'],
+                virtual = self.tests[test_name]['is_virtual']
             )._name
         except Exception as e:
-            self._print_assert_equal(None, e, mangled, self.test[test_name]['expected_mangling'], 'Mangling for \'' + test_name + '\' : [' + '{result}' + ']')
+            self._print_assert_equal(None, e, mangled, self.tests[test_name]['expected_mangling'], 'Mangling for \'' + test_name + '\' : [' + '{result}' + ']')
             return
         try:
             unmangled = mangling.unmangle(mangled).decl.to_c()
         except Exception as e:
             self._print_assert_equal(None, e, 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
             return
-        self._print_assert_equal(mangled, self.test[test_name]['expected_mangling'], 'Mangling for \'' + test_name + '\' : [' + '{result}' + ']')
-        if 'expected_unmangling' in self.test[test_name]:
-            self._print_assert_equal(str(unmangled).replace('\n', ''), self.test[test_name]['expected_unmangling'], 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
+        self._print_assert_equal(mangled, self.tests[test_name]['expected_mangling'], 'Mangling for \'' + test_name + '\' : [' + '{result}' + ']')
+        if 'expected_unmangling' in self.tests[test_name]:
+            self._print_assert_equal(str(unmangled).replace('\n', ''), self.tests[test_name]['expected_unmangling'], 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
         else:
             self._print_assert_equal(str(unmangled), str(origin_c_string), 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
         return
