@@ -15,8 +15,8 @@ class ManglingTest:
     """Allow to check if the mangling is conform to the documentation"""
 
     cparse = Declaration()
-    okString = '\033[92mPASSED\033[0m'
-    failString = '\033[91mFAILED\033[0m'
+    okString = '[\033[92mPASSED\033[0m]'
+    failString = '[\033[91mFAILED\033[0m]'
     tests = {}
     
     def add_test(self, test_name, c_string, expected_mangling, origin, origin_name, expected_unmangling = None, context = [], is_virtual = False):
@@ -72,8 +72,14 @@ class ManglingTest:
         for context in self.tests[test_name]['context']:
             c_body += context
         c_body += self.tests[test_name]['c_string']
-        c_ast = self.cparse.parse(c_body)
-        origin_c_string = c_ast.body[len(self.tests[test_name]['context'])].to_c()
+        c_ast = ''
+        origin_c_string = ''
+        try:
+            c_ast = self.cparse.parse(c_body)
+            origin_c_string = c_ast.body[len(self.tests[test_name]['context'])].to_c()
+        except Exception as e:
+            self._print_assert_equal(test_name, '\n' + str(e), None, 'Parsing for \'' + test_name + '\' : [' + '{result}' + ']')
+            return
         mangled = ''
         unmangled = ''
         try:
@@ -84,21 +90,21 @@ class ManglingTest:
                 virtual = self.tests[test_name]['is_virtual']
             )._name
         except Exception as e:
-            self._print_assert_equal(None, e, mangled, self.tests[test_name]['expected_mangling'], 'Mangling for \'' + test_name + '\' : [' + '{result}' + ']')
+            self._print_assert_equal(test_name, e, None, 'Mangling for \'{name}\' : {result}')
             return
         try:
             unmangled = mangling.unmangle(mangled).decl.to_c()
         except Exception as e:
-            self._print_assert_equal(None, e, 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
+            self._print_assert_equal(test_name, e, None, 'Unmangling for \'{name}\' : {result}')
             return
-        self._print_assert_equal(mangled, self.tests[test_name]['expected_mangling'], 'Mangling for \'' + test_name + '\' : [' + '{result}' + ']')
+        self._print_assert_equal(test_name, mangled, self.tests[test_name]['expected_mangling'], 'Mangling for \'{name}\' : {result}')
         if 'expected_unmangling' in self.tests[test_name]:
-            self._print_assert_equal(str(unmangled).replace('\n', ''), self.tests[test_name]['expected_unmangling'], 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
+            self._print_assert_equal(test_name, str(unmangled).replace('\n', ''), self.tests[test_name]['expected_unmangling'], 'Unmangling for \'{name}\' : {result}')
         else:
-            self._print_assert_equal(str(unmangled), str(origin_c_string), 'Unmangling for \'' + test_name + '\' : [' + '{result}' + ']')
+            self._print_assert_equal(test_name, str(unmangled), str(origin_c_string), 'Unmangling for \'{name}\' : {result}')
         return
 
-    def _print_assert_equal(self, arg1, arg2,  format_string):
+    def _print_assert_equal(self, test_name, arg1, arg2,  format_string):
         """ 
         print format_string and arg1 arg2, depnding of the result of arg1 == arg2
         
@@ -109,10 +115,14 @@ class ManglingTest:
         :param format_string: format_string to print, may expect the following key : 'result'
         :type format_string: string ready for format. Can include the 'result' key.
         """
-        print(format_string.format(result = (self.okString if arg1 == arg2 else self.failString)))
+        # python format() cannot space pad align string @v@
+        print(format_string.format(
+            name = test_name,
+            result = (self.okString if arg1 == arg2 else self.failString))
+        )
         if arg1 != arg2:
-            print('\tExpecting : ' + repr(arg2))
-            print('\tHad       : ' + repr(arg1));
+            print('\tExpecting : ' + (arg2 if isinstance(arg2, str) else repr(arg2)))
+            print('\tHad       : ' + (arg1 if isinstance(arg1, str) else repr(arg1)));
 
 unit_test = ManglingTest()
 unit_test.add_test(
