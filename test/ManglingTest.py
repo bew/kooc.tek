@@ -1,14 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import unittest
-import sys
-
-sys.path.insert(0, '../src/mangling')
-import mangling
+import sys, os
 
 from cnorm.parsing.declaration import Declaration
 from cnorm.passes import to_c
+
+filePath = os.path.realpath(os.path.dirname(__file__))
+sys.path.insert(0, filePath + '/../src/mangling')
+
+import mangling
 
 class ManglingTest(unittest.TestCase):
     """Allow to check if the mangling is conform to the documentation"""

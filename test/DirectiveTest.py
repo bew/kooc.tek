@@ -1,11 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import unittest
-import sys
-sys.path.insert(0, '../src/directive')
+import sys, os
 
 from cnorm import nodes
+
+filePath = os.path.realpath(os.path.dirname(__file__))
+sys.path.insert(0, filePath + '/../src/directive')
+
 import directive
 
 def count_of_type(target_type, arr):
@@ -65,8 +68,6 @@ class DirectiveTest(unittest.TestCase):
 
         module = ast.body[0]
         self.assertEqual(module._name, "Test")
-
-        self.assertIsInstance(module.body, directive.KcDeclBlock)
 
         in_module_decl = module.body.body[0]
         self.assertIsInstance(in_module_decl, nodes.Decl)
