@@ -2,6 +2,7 @@ from pyrser import meta
 from pyrser.grammar import Grammar
 from cnorm.parsing.declaration import Declaration
 from cnorm import nodes
+from weakref import ref
 
 from knodes import *
 
@@ -9,6 +10,19 @@ from knodes import *
 class Directive(Grammar, Declaration):
     entry = "translation_unit"
     grammar = """
+        translation_unit = [
+            @ignore("C/C++")
+            [
+                __scope__ :current_block
+                #new_root(_, current_block)
+                #kc_init_root(_)
+                [
+                    declaration
+                ]*
+            ]
+            Base.eof
+        ]
+
         declaration = [
             #kc_is_top_level(current_block) kc_top_level
             | Declaration.declaration
@@ -43,7 +57,7 @@ class Directive(Grammar, Declaration):
             __scope__ :inheritance_list
             [ ':' kc_class_inheritance :>inheritance_list ]?
             kc_class_block :block
-            #kc_add_class(name, inheritance_list, block)
+            #kc_add_class(current_block, name, inheritance_list, block)
         ]
 
         kc_class_inheritance = [
@@ -55,8 +69,8 @@ class Directive(Grammar, Declaration):
 
         kc_class_block = [
             '{'
-                __scope__ :current_block
-                #new_blockstmt(_, current_block)
+                __scope__ :current_block #new_blockstmt(_, current_block)
+                #kc_init_class_block(_)
                 [
                     Declaration.declaration
                     | kc_at_member
@@ -65,14 +79,24 @@ class Directive(Grammar, Declaration):
             '}'
         ]
 
+        // TODO: refactor member/virtual handling
         kc_at_member = [
             "@member" [
-                Declaration.declaration | Statement.compound_statement
+                Declaration.declaration | block_of_declarations
             ] #kc_add_member(current_block)
         ]
 
         kc_at_virtual = [
-            "@virtual" Declaration.declaration #kc_add_virtual(current_block)
+            "@virtual" [
+                Declaration.declaration | block_of_declarations
+            ] #kc_add_virtual(current_block)
+        ]
+
+        block_of_declarations = [
+            '{'
+                __scope__ :current_block #new_blockstmt(_, current_block)
+                [ Declaration.declaration ]*
+            '}'
         ]
 
         kc_id = [ Base.id ]
@@ -81,8 +105,13 @@ class Directive(Grammar, Declaration):
 
     def __init__(self):
         Grammar.__init__(self)
-        self.imports = []
-        self.typenames = []
+
+@meta.hook(Directive)
+def kc_init_root(self, ast):
+    setattr(ast, "ktypes", {})
+    setattr(ast, "ktypenames", [])
+    setattr(ast, "kimports", [])
+    return True
 
 @meta.hook(Directive)
 def kc_is_top_level(self, current_block):
@@ -91,9 +120,6 @@ def kc_is_top_level(self, current_block):
 
 @meta.hook(Directive)
 def kc_new_import(self, current_block, name_node):
-    if not hasattr(current_block.ref, "imports"):
-        setattr(current_block.ref, "imports", [])
-
     module_path = self.value(name_node)[1:-1]
 
     if module_path.endswith('.kh'):
@@ -105,10 +131,10 @@ def kc_new_import(self, current_block, name_node):
         header_path = module_path + '.h'
         module_path = module_path + '.kh'
 
-    if module_path in current_block.ref.imports:
+    if module_path in current_block.ref.kimports:
         return True
     else:
-        current_block.ref.imports.append(module_path)
+        current_block.ref.kimports.append(module_path)
 
     inc = """#include "%s";""" % header_path
     raw = nodes.Raw(inc)
@@ -117,9 +143,12 @@ def kc_new_import(self, current_block, name_node):
 
 @meta.hook(Directive)
 def kc_new_module(self, current_block, name_node, module_block):
-    KcModule.__init__(module_block, self.value(name_node))
+    module_name = self.value(name_node)
+    KcModule.__init__(module_block, module_name)
     module_block.__class__ = KcModule
-    current_block.ref.body.append(module_block)
+
+    ktypes = current_block.ref.ktypes
+    ktypes[module_name] = module_block
     return True
 
 @meta.hook(Directive)
@@ -132,13 +161,15 @@ def kc_new_implementation(self, current_block, name_node, implem_block):
 # Class hooks
 
 @meta.hook(Directive)
-def kc_add_typename(self, current_block, name_node):
-    if not hasattr(current_block.ref, "typenames"):
-        setattr(current_block.ref, "typenames", [])
+def kc_init_class_block(self, ast):
+    setattr(ast, "members", [])
+    return True
 
+@meta.hook(Directive)
+def kc_add_typename(self, current_block, name_node):
     typename = self.value(name_node)
-    if typename not in self.typenames:
-        current_block.ref.typenames.append(typename)
+    if typename not in current_block.ref.ktypenames:
+        current_block.ref.ktypenames.append(typename)
     return True
 
 @meta.hook(Directive)
@@ -152,17 +183,55 @@ def kc_inheritance_add_parent(self, ast, name_node):
     return True
 
 @meta.hook(Directive)
-def kc_add_class(self, name_node, inheritance_list, class_block):
-    # handle class re-opening ?
-    # => check inheritance_list equality
-    # or
-    # => check that the re-opening does not mention an inheritance_list
-    # or
-    # => just don't care, and add the new inheritance_list to the existing one (if any) ?
+def kc_add_class(self, current_block, name_node, inheritance_list, class_block):
+    parents = []
+    if hasattr(inheritance_list, "parents"):
+        parents = inheritance_list.parents
+
+    class_name = self.value(name_node)
+    klass = KcClass(class_name)
+
+    ktypes = current_block.ref.ktypes
+    if class_name in ktypes:
+        # handle class re-opening ?
+        # => check inheritance_list equality
+        # or
+        # => check that the re-opening does not mention an inheritance_list
+        # or
+        # => just don't care, and add the new inheritance_list to the existing one (if any) ?
+        raise Exception("Class re-opening not handled currently")
+        #return False
+
+    # add parents
+    for parent_name in parents:
+        if parent_name not in ktypes:
+            raise Exception("Unknown class parent type '%s'" % parent_name)
+            #return False
+        parent = ktypes[parent_name]
+        klass.add_parent(parent)
+
+    # TODO: add members/virtual to KcClass instance
+    # add members
+    # add virtuals
+
+    ktypes[class_name] = klass
+    #current_block.ref.types[class_name] = ref(klass)
     return True
 
+#TODO: need tests
 @meta.hook(Directive)
 def kc_add_member(self, current_block):
+    last_decl = current_block.ref.body.pop()
+    if isinstance(last_decl, nodes.Decl):
+        current_block.ref.members.append(last_decl)
+        return True
+
+    if not isinstance(last_decl, nodes.BlockStmt):
+        return False
+
+    for decl in last_decl.body:
+        current_block.ref.members.append(decl)
+
     return True
 
 @meta.hook(Directive)

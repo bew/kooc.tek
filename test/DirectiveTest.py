@@ -10,6 +10,7 @@ filePath = os.path.realpath(os.path.dirname(__file__))
 sys.path.insert(0, filePath + '/../src/directive')
 
 import directive
+import knodes
 
 class DirectiveTest(unittest.TestCase):
     """Allow to check if the Directive is conform to the documentation"""
@@ -24,8 +25,8 @@ class DirectiveTest(unittest.TestCase):
         """
 
         ast = self.koocparser.parse(source)
-        self.assertIsInstance(ast.imports, list)
-        self.assertEqual(ast.imports[0], "myheader.kh")
+        self.assertIsInstance(ast.kimports, list)
+        self.assertEqual(ast.kimports[0], "myheader.kh")
 
     def test_multiple_import(self):
         """Detect multiple import statement"""
@@ -37,8 +38,8 @@ class DirectiveTest(unittest.TestCase):
         """
 
         ast = self.koocparser.parse(source)
-        self.assertIsInstance(ast.imports, list)
-        self.assertListEqual(ast.imports, ["myheader.kh", "otherheader.kh"])
+        self.assertIsInstance(ast.kimports, list)
+        self.assertListEqual(ast.kimports, ["myheader.kh", "otherheader.kh"])
 
     def test_import_kc(self):
         """Do not import kooc source file"""
@@ -62,15 +63,93 @@ class DirectiveTest(unittest.TestCase):
         """
 
         ast = self.koocparser.parse(source)
-        self.assertIsInstance(ast.body[0], directive.KcModule)
+        self.assertTrue("Test" in ast.ktypes)
+        self.assertIsInstance(ast.ktypes["Test"], directive.KcModule)
 
-        module = ast.body[0]
-        self.assertEqual(module._name, "Test")
+        module = ast.ktypes["Test"]
+        self.assertEqual(module.name, "Test")
 
         in_module_decl = module.body[0]
         self.assertIsInstance(in_module_decl, nodes.Decl)
         self.assertEqual(in_module_decl._name, "var")
 
-    #TODO: tests on top_level, class, inheritance_list, virtuals, members, typenames, ........
+    def test_top_level(self):
+        """@ keywords must be in top level"""
+
+        source = """
+            {
+                @module Bla
+                {
+                }
+            }
+        """
+
+        with self.assertRaises(Exception):
+            self.koocparser.parse(source)
+
+    def test_typenames_no_class(self):
+        """No typename for a module"""
+
+        source = """
+            @module Bla {}
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertListEqual(ast.ktypenames, [])
+
+    def test_typenames_for_class(self):
+        """A class add a new typename"""
+
+        source = """
+            @class C {}
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertListEqual(ast.ktypenames, ["C"])
+
+    def test_typenames_for_multi_classes(self):
+        """typenames for class parents"""
+
+        source = """
+            @class A {}
+            @class B {}
+            @class C : A, B {}
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertListEqual(ast.ktypenames, ["A", "B", "C"])
+
+    def test_class_inheritance(self):
+        """A class with parents"""
+
+        source = """
+            @class A {}
+            @class B {}
+            @class C : A, B {}
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertTrue("C" in ast.ktypes)
+        self.assertIsInstance(ast.ktypes["C"], knodes.KcClass)
+
+        klass = ast.ktypes["C"]
+        self.assertTrue("A" in klass.parents)
+        self.assertTrue("B" in klass.parents)
+        self.assertIsInstance(klass.parents, dict)
+
+        self.assertIsInstance(klass.parents["A"], knodes.KcClass)
+
+    def test_class_inheritance_fail(self):
+        """TODO: doc"""
+
+        source = """
+            @class C : DFYUI {}
+        """
+
+        with self.assertRaises(Exception):
+            self.koocparser.parse(source)
+
+
+    #TODO: tests on virtuals, members, ........
 
 unittest.main()
