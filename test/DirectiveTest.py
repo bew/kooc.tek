@@ -21,7 +21,7 @@ def count_of_type(target_type, arr):
 class DirectiveTest(unittest.TestCase):
     """Allow to check if the Directive is conform to the documentation"""
 
-    declparser = directive.Directive()
+    koocparser = directive.Directive()
 
     def test_import(self):
         """Detect import statement"""
@@ -30,27 +30,33 @@ class DirectiveTest(unittest.TestCase):
             @import "myheader.kh"
         """
 
-        ast = self.declparser.parse(source)
-        nb_import = count_of_type(directive.KcImport, ast.body)
-        self.assertEqual(nb_import, 1)
-
-        single_import = ast.body[0]
-        self.assertEqual(single_import.filepath, "myheader.kh")
+        ast = self.koocparser.parse(source)
+        self.assertIsInstance(ast.imports, list)
+        self.assertEqual(ast.imports[0], "myheader.kh")
 
     def test_multiple_import(self):
         """Detect multiple import statement"""
 
         source = """
             @import "myheader.kh"
+            @import "myheader.kh"
             @import "otherheader.kh"
         """
 
-        ast = self.declparser.parse(source)
-        nb_import = count_of_type(directive.KcImport, ast.body)
-        self.assertEqual(nb_import, 2)
-        imports = ast.body
-        self.assertEqual(imports[0].filepath, "myheader.kh")
-        self.assertEqual(imports[1].filepath, "otherheader.kh")
+        ast = self.koocparser.parse(source)
+        self.assertIsInstance(ast.imports, list)
+        self.assertListEqual(ast.imports, ["myheader.kh", "otherheader.kh"])
+
+    def test_import_kc(self):
+        """Do not import kooc source file"""
+
+        source = """
+            @import "source.kc"
+        """
+
+        #TODO: use custom exception
+        with self.assertRaises(Exception):
+            self.koocparser.parse(source)
 
     def test_module(self):
         """Detect module & block"""
@@ -62,7 +68,7 @@ class DirectiveTest(unittest.TestCase):
             }
         """
 
-        ast = self.declparser.parse(source)
+        ast = self.koocparser.parse(source)
         nb_import = count_of_type(directive.KcModule, ast.body)
         self.assertEqual(nb_import, 1)
 

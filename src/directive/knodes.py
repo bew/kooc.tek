@@ -1,22 +1,14 @@
 from pyrser.parsing.node import Node
 from cnorm import nodes
 
-class KcImport(Node):
-    """@import node"""
-
-    def __init__(self, filepath):
-        self.filepath = filepath
-
-class KcModule(Node):
+class KcModule(nodes.BlockStmt):
     """@module node"""
 
-    def __init__(self, name, block):
+    def __init__(self, name):
         self._name = name
-        self.body = block
 
-class KcImplementation(Node):
+class KcImplementation(nodes.BlockStmt):
     """@implementation node"""
 
-    def __init__(self, name, block):
+    def __init__(self, name):
         self._name = name
-        self.body = block
