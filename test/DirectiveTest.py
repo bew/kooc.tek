@@ -11,13 +11,6 @@ sys.path.insert(0, filePath + '/../src/directive')
 
 import directive
 
-def count_of_type(target_type, arr):
-    count = 0
-    for _, decl in enumerate(arr):
-        if isinstance(decl, target_type):
-            count += 1
-    return count
-
 class DirectiveTest(unittest.TestCase):
     """Allow to check if the Directive is conform to the documentation"""
 
@@ -69,14 +62,15 @@ class DirectiveTest(unittest.TestCase):
         """
 
         ast = self.koocparser.parse(source)
-        nb_import = count_of_type(directive.KcModule, ast.body)
-        self.assertEqual(nb_import, 1)
+        self.assertIsInstance(ast.body[0], directive.KcModule)
 
         module = ast.body[0]
         self.assertEqual(module._name, "Test")
 
-        in_module_decl = module.body.body[0]
+        in_module_decl = module.body[0]
         self.assertIsInstance(in_module_decl, nodes.Decl)
         self.assertEqual(in_module_decl._name, "var")
+
+    #TODO: tests on top_level, class, inheritance_list, virtuals, members, typenames, ........
 
 unittest.main()

@@ -6,7 +6,6 @@ from cnorm import nodes
 from knodes import *
 
 
-#TODO: change class names, archi
 class Directive(Grammar, Declaration):
     entry = "translation_unit"
     grammar = """
