@@ -152,4 +152,50 @@ class DirectiveTest(unittest.TestCase):
 
     #TODO: tests on virtuals, members, ........
 
+class DirectiveLookup(unittest.TestCase):
+
+    koocparser = directive.Directive()
+
+    def test_simple_in_top_level(self):
+        """TODO: doc"""
+
+        source = """
+            int var = [MyModule.some_variable];
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertIsInstance(ast.body[0], nodes.Decl)
+
+        decl = ast.body[0]
+        self.assertIsInstance(decl._assign_expr, knodes.KcLookup)
+
+        lookup = decl._assign_expr
+        self.assertEqual(lookup.context, 'MyModule')
+        self.assertEqual(lookup.member, 'some_variable')
+
+    def test_simple_in_block(self):
+        """TODO: doc"""
+
+        source = """
+            void some_function()
+            {
+                int var = [MyModule.some_variable];
+            }
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertIsInstance(ast.body[0], nodes.Decl)
+
+        func = ast.body[0]
+        self.assertIsInstance(func._ctype, nodes.FuncType)
+        self.assertIsInstance(func.body, nodes.BlockStmt)
+        self.assertIsInstance(func.body.body[0], nodes.Decl)
+
+        decl = func.body.body[0]
+        self.assertIsInstance(decl._assign_expr, knodes.KcLookup)
+
+        lookup = decl._assign_expr
+        self.assertEqual(lookup.context, 'MyModule')
+        self.assertEqual(lookup.member, 'some_variable')
+
 unittest.main()
