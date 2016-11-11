@@ -230,4 +230,35 @@ class DirectiveCall(unittest.TestCase):
         self.assertIsInstance(call.params, list)
         self.assertEqual(len(call.params), 4)
 
+class DirectiveCast(unittest.TestCase):
+
+    koocparser = directive.Directive()
+
+    def test_builtin_type(self):
+        """Cast to one C type"""
+
+        source = """
+            int a = @!(int)[MyModule.my_float];
+        """
+
+        ast = self.koocparser.parse(source)
+        self.assertIsInstance(ast.body[0], nodes.Decl)
+
+        decl1 = ast.body[0]
+        self.assertIsInstance(decl1._assign_expr, knodes.KcCast)
+
+        cast = decl1._assign_expr
+        self.assertIsInstance(cast.type, nodes.Decl)
+        self.assertIsInstance(cast.expr, knodes.KcLookup)
+
+    def test_cannot_cast_non_kooc_expr(self):
+        """Parsing must fails on Kooc casting a non Kooc expression"""
+
+        source = """
+            int a = @!(int)4;
+        """
+
+        with self.assertRaises(Exception):
+            self.koocparser.parse(source)
+
 unittest.main()
