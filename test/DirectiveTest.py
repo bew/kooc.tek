@@ -12,66 +12,29 @@ sys.path.insert(0, filePath + '/../src/directive')
 import directive
 import knodes
 
-class DirectiveTest(unittest.TestCase):
-    """Allow to check if the Directive is conform to the documentation"""
+class DirectiveTestCase(unittest.TestCase):
+    """Base class for all Directive test cases"""
 
     koocparser = directive.Directive()
 
-    def test_import(self):
-        """Detect import statement"""
+    def parse(self, source : str):
+        """Parse the given source"""
 
-        source = """
-            @import "myheader.kh"
-        """
+        return self.koocparser.parse(source)
 
-        ast = self.koocparser.parse(source)
-        self.assertIsInstance(ast.kimports, list)
-        self.assertEqual(ast.kimports[0], "myheader.kh")
+    def parse_in_block(self, source_in_block : str):
+        """Parse source as code in a block (ex: in a function)"""
 
-    def test_multiple_import(self):
-        """Detect multiple import statement"""
+        source = " { " + source_in_block + " } "
 
-        source = """
-            @import "myheader.kh"
-            @import "myheader.kh"
-            @import "otherheader.kh"
-        """
+        ast = self.parse(source)
+        ast_in_block = ast.body[0].body
+        return ast_in_block
 
-        ast = self.koocparser.parse(source)
-        self.assertIsInstance(ast.kimports, list)
-        self.assertListEqual(ast.kimports, ["myheader.kh", "otherheader.kh"])
+class DirectiveTest(DirectiveTestCase):
+    """Allow to check if the Directive is conform to the documentation"""
 
-    def test_import_kc(self):
-        """Do not import kooc source file"""
-
-        source = """
-            @import "source.kc"
-        """
-
-        #TODO: use custom exception
-        with self.assertRaises(Exception):
-            self.koocparser.parse(source)
-
-    def test_module(self):
-        """Detect module & block"""
-
-        source = """
-            @module Test
-            {
-                int var;
-            }
-        """
-
-        ast = self.koocparser.parse(source)
-        self.assertTrue("Test" in ast.ktypes)
-        self.assertIsInstance(ast.ktypes["Test"], directive.KcModule)
-
-        module = ast.ktypes["Test"]
-        self.assertEqual(module.name, "Test")
-
-        in_module_decl = module.body[0]
-        self.assertIsInstance(in_module_decl, nodes.Decl)
-        self.assertEqual(in_module_decl._name, "var")
+class DirectiveTopLevel(DirectiveTestCase):
 
     def test_top_level(self):
         """@ keywords must be in top level"""
@@ -85,7 +48,70 @@ class DirectiveTest(unittest.TestCase):
         """
 
         with self.assertRaises(Exception):
-            self.koocparser.parse(source)
+            self.parse(source)
+
+
+class DirectiveImport(DirectiveTestCase):
+
+    def test_single_import(self):
+        """Detect import statement"""
+
+        source = """
+            @import "myheader.kh"
+        """
+
+        ast = self.parse(source)
+        self.assertIsInstance(ast.kimports, list)
+        self.assertEqual(ast.kimports[0], "myheader.kh")
+
+    def test_multiple_import(self):
+        """Detect multiple import statement"""
+
+        source = """
+            @import "myheader.kh"
+            @import "myheader.kh"
+            @import "otherheader.kh"
+        """
+
+        ast = self.parse(source)
+        self.assertIsInstance(ast.kimports, list)
+        self.assertListEqual(ast.kimports, ["myheader.kh", "otherheader.kh"])
+
+    def test_import_kc(self):
+        """Do not import kooc source file"""
+
+        source = """
+            @import "source.kc"
+        """
+
+        #TODO: use custom exception
+        with self.assertRaises(Exception):
+            self.parse(source)
+
+class DirectiveModule(DirectiveTestCase):
+
+    def test_module(self):
+        """Detect module & block"""
+
+        source = """
+            @module Test
+            {
+                int var;
+            }
+        """
+
+        ast = self.parse(source)
+        self.assertTrue("Test" in ast.ktypes)
+        self.assertIsInstance(ast.ktypes["Test"], directive.KcModule)
+
+        module = ast.ktypes["Test"]
+        self.assertEqual(module.name, "Test")
+
+        in_module_decl = module.body[0]
+        self.assertIsInstance(in_module_decl, nodes.Decl)
+        self.assertEqual(in_module_decl._name, "var")
+
+class DirectiveTypes(DirectiveTestCase):
 
     def test_typenames_no_class(self):
         """No typename for a module"""
@@ -94,7 +120,7 @@ class DirectiveTest(unittest.TestCase):
             @module Bla {}
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
         self.assertListEqual(ast.ktypenames, [])
 
     def test_typenames_for_class(self):
@@ -104,7 +130,7 @@ class DirectiveTest(unittest.TestCase):
             @class C {}
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
         self.assertListEqual(ast.ktypenames, ["C"])
 
     def test_typenames_for_multi_classes(self):
@@ -116,8 +142,10 @@ class DirectiveTest(unittest.TestCase):
             @class C : A, B {}
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
         self.assertListEqual(ast.ktypenames, ["A", "B", "C"])
+
+class DirectiveClass(DirectiveTestCase):
 
     def test_class_inheritance(self):
         """A class with parents"""
@@ -128,7 +156,7 @@ class DirectiveTest(unittest.TestCase):
             @class C : A, B {}
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
         self.assertTrue("C" in ast.ktypes)
         self.assertIsInstance(ast.ktypes["C"], knodes.KcClass)
 
@@ -147,14 +175,11 @@ class DirectiveTest(unittest.TestCase):
         """
 
         with self.assertRaises(Exception):
-            self.koocparser.parse(source)
-
+            self.parse(source)
 
     #TODO: tests on virtuals, members, ........
 
-class DirectiveLookup(unittest.TestCase):
-
-    koocparser = directive.Directive()
+class DirectiveLookup(DirectiveTestCase):
 
     def test_simple_in_top_level(self):
         """TODO: doc"""
@@ -163,7 +188,21 @@ class DirectiveLookup(unittest.TestCase):
             int var = [MyModule.some_variable];
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
+        self.asserts_for_simple(ast)
+
+    def test_simple_in_block(self):
+        """TODO: doc"""
+
+        source = """
+            int var = [MyModule.some_variable];
+        """
+
+        ast = self.parse_in_block(source)
+        self.asserts_for_simple(ast)
+
+    # helper
+    def asserts_for_simple(self, ast):
         self.assertIsInstance(ast.body[0], nodes.Decl)
 
         decl = ast.body[0]
@@ -173,34 +212,7 @@ class DirectiveLookup(unittest.TestCase):
         self.assertEqual(lookup.context, 'MyModule')
         self.assertEqual(lookup.member, 'some_variable')
 
-    def test_simple_in_block(self):
-        """TODO: doc"""
-
-        source = """
-            void some_function()
-            {
-                int var = [MyModule.some_variable];
-            }
-        """
-
-        ast = self.koocparser.parse(source)
-        self.assertIsInstance(ast.body[0], nodes.Decl)
-
-        func = ast.body[0]
-        self.assertIsInstance(func._ctype, nodes.FuncType)
-        self.assertIsInstance(func.body, nodes.BlockStmt)
-        self.assertIsInstance(func.body.body[0], nodes.Decl)
-
-        decl = func.body.body[0]
-        self.assertIsInstance(decl._assign_expr, knodes.KcLookup)
-
-        lookup = decl._assign_expr
-        self.assertEqual(lookup.context, 'MyModule')
-        self.assertEqual(lookup.member, 'some_variable')
-
-class DirectiveCall(unittest.TestCase):
-
-    koocparser = directive.Directive()
+class DirectiveCall(DirectiveTestCase):
 
     def test_static_call(self):
         """TODO: doc"""
@@ -210,7 +222,7 @@ class DirectiveCall(unittest.TestCase):
             int b = [MyClass some_method :&obj :1 :2 :3.3];
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
         self.assertIsInstance(ast.body[0], nodes.Decl)
 
         decl1 = ast.body[0]
@@ -230,9 +242,7 @@ class DirectiveCall(unittest.TestCase):
         self.assertIsInstance(call.params, list)
         self.assertEqual(len(call.params), 4)
 
-class DirectiveCast(unittest.TestCase):
-
-    koocparser = directive.Directive()
+class DirectiveCast(DirectiveTestCase):
 
     def test_builtin_type(self):
         """Cast to one C type"""
@@ -241,7 +251,7 @@ class DirectiveCast(unittest.TestCase):
             int a = @!(int)[MyModule.my_float];
         """
 
-        ast = self.koocparser.parse(source)
+        ast = self.parse(source)
         self.assertIsInstance(ast.body[0], nodes.Decl)
 
         decl1 = ast.body[0]
@@ -259,6 +269,6 @@ class DirectiveCast(unittest.TestCase):
         """
 
         with self.assertRaises(Exception):
-            self.koocparser.parse(source)
+            self.parse(source)
 
 unittest.main()
