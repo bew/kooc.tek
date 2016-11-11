@@ -31,13 +31,10 @@ class DirectiveTestCase(unittest.TestCase):
         ast_in_block = ast.body[0].body
         return ast_in_block
 
-class DirectiveTest(DirectiveTestCase):
-    """Allow to check if the Directive is conform to the documentation"""
-
 class DirectiveTopLevel(DirectiveTestCase):
 
     def test_top_level(self):
-        """@ keywords must be in top level"""
+        """@ Kooc keywords must be in top level only"""
 
         source = """
             {
@@ -245,7 +242,7 @@ class DirectiveCall(DirectiveTestCase):
 class DirectiveCast(DirectiveTestCase):
 
     def test_builtin_type(self):
-        """Cast to one C type"""
+        """Kooc Cast to one C type"""
 
         source = """
             int a = @!(int)[MyModule.my_float];
@@ -260,6 +257,50 @@ class DirectiveCast(DirectiveTestCase):
         cast = decl1._assign_expr
         self.assertIsInstance(cast.type, nodes.Decl)
         self.assertIsInstance(cast.expr, knodes.KcLookup)
+        self.assertEqual(cast.type._ctype._identifier, 'int')
+
+    def test_kooc_type(self):
+        """Kooc Cast to one Kooc type"""
+
+        # FIXME: add class type to cnorm types
+        source = """
+            @class MyClass {}
+            typedef struct _mangling_of_MyClass MyClass;
+            MyClass *instance = @!(MyClass*)[MyClass new];
+        """
+
+        ast = self.parse(source)
+
+        decl = ast.body[1] # ast.body[0] is the typedef
+        self.assertIsInstance(decl._assign_expr, knodes.KcCast)
+
+        cast = decl._assign_expr
+        self.assertIsInstance(cast.expr, knodes.KcCall)
+        self.assertIsInstance(cast.type, nodes.Decl)
+        self.assertEqual(cast.type._ctype._identifier, 'MyClass')
+
+    def test_assign_to(self):
+        """C type assignation to a kooc cast"""
+
+        source = """
+            @!(int)[MyModule.my_var] = 42;
+        """
+
+        ast = self.parse_in_block(source)
+
+        expr_stmt = ast.body[0]
+        bin_expr = expr_stmt.expr
+        self.assertIsInstance(bin_expr.call_expr, nodes.Raw)
+        self.assertEqual(bin_expr.call_expr.value, '=')
+        self.assertIsInstance(bin_expr.params, list)
+
+        cast = bin_expr.params[0]  # assign to
+        value = bin_expr.params[1] # assign what
+
+        self.assertIsInstance(cast, knodes.KcCast)
+        self.assertIsInstance(cast.expr, knodes.KcLookup)
+        self.assertIsInstance(cast.type, nodes.Decl)
+        self.assertEqual(cast.type._ctype._identifier, 'int')
 
     def test_cannot_cast_non_kooc_expr(self):
         """Parsing must fails on Kooc casting a non Kooc expression"""
