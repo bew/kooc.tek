@@ -4,6 +4,9 @@ from cnorm.parsing.declaration import Declaration
 from cnorm import nodes
 from weakref import ref
 
+# debug for pyrser grammar
+import pyrser.hooks.echo
+
 from knodes import *
 
 
@@ -22,6 +25,56 @@ class Directive(Grammar, Declaration):
             ]
             Base.eof
         ]
+
+        // Kooc primary expression rules
+        //--------------------------------
+
+        primary_expression = [
+            [ kc_primary_expression | Declaration.primary_expression ] :>_
+        ]
+
+        kc_primary_expression = [
+            [ kc_cast | kc_expression ] :>_
+        ]
+
+        kc_cast = [
+            "@!" '(' type_name :type ')' kc_expression :expr
+            #kc_set_cast(_, type, expr)
+        ]
+
+        // Kooc expression rules
+        //--------------------------------
+
+        kc_expression = [
+            '[' [ kc_lookup | kc_call ] :>_ ']'
+        ]
+
+        kc_expr_context = [
+            kc_id
+            //| primary_expression //TODO: later, handle expr as context
+        ]
+
+        // [Module.variable]
+        // [Module.var1.subvar] Besoin de le gerer ? (later)
+        kc_lookup = [
+            kc_expr_context :ctx '.' Base.id :member
+            #kc_set_lookup(_, ctx, member)
+        ]
+
+        // [Module function]
+        // [Module function :param1 :param2]
+        kc_call = [
+            kc_expr_context :ctx Base.id :func kc_call_params :params
+            #kc_set_call(_, ctx, func, params)
+        ]
+
+        kc_call_params = [
+            #kc_call_params_init(_)
+            [ ':' assignement_expression :expr #kc_call_params_add(_, expr) ]*
+        ]
+
+        // Kooc top level keyword rules
+        //--------------------------------
 
         declaration = [
             #kc_is_top_level(current_block) kc_top_level
@@ -60,6 +113,9 @@ class Directive(Grammar, Declaration):
             #kc_add_class(current_block, name, inheritance_list, block)
         ]
 
+        // Kooc class rules
+        //--------------------------------
+
         kc_class_inheritance = [
             kc_id :name #kc_inheritance_add_parent(_, name)
             [
@@ -92,6 +148,9 @@ class Directive(Grammar, Declaration):
             ] #kc_add_virtual(current_block)
         ]
 
+        // Misc rules
+        //--------------------------------
+
         block_of_declarations = [
             '{'
                 __scope__ :current_block #new_blockstmt(_, current_block)
@@ -103,9 +162,6 @@ class Directive(Grammar, Declaration):
 
     """
 
-    def __init__(self):
-        Grammar.__init__(self)
-
 @meta.hook(Directive)
 def kc_init_root(self, ast):
     setattr(ast, "ktypes", {})
@@ -113,10 +169,49 @@ def kc_init_root(self, ast):
     setattr(ast, "kimports", [])
     return True
 
+# Checks hooks
+#--------------------------------
+
 @meta.hook(Directive)
 def kc_is_top_level(self, current_block):
     is_root = isinstance(current_block.ref, nodes.RootBlockStmt)
     return is_root
+
+# Expressions hooks
+#--------------------------------
+
+@meta.hook(Directive)
+def kc_set_cast(self, ast, type_name, expr):
+    ast.set(KcCast(type_name, expr))
+    return True
+
+@meta.hook(Directive)
+def kc_set_lookup(self, ast, ctx_node, member_node):
+    ctx_name = self.value(ctx_node)
+    member = self.value(member_node)
+    ast.set(KcLookup(ctx_name, member))
+    return True
+
+@meta.hook(Directive)
+def kc_set_call(self, ast, ctx_node, func_node, params_node):
+    ctx_name = self.value(ctx_node)
+    func_name = self.value(func_node)
+    params = params_node.params
+    ast.set(KcCall(ctx_name, func_name, params))
+    return True
+
+@meta.hook(Directive)
+def kc_call_params_init(self, ast):
+    setattr(ast, "params", [])
+    return True
+
+@meta.hook(Directive)
+def kc_call_params_add(self, ast, expr):
+    ast.params.append(expr)
+    return True
+
+# Top level hooks
+#--------------------------------
 
 @meta.hook(Directive)
 def kc_new_import(self, current_block, name_node):
@@ -159,6 +254,7 @@ def kc_new_implementation(self, current_block, name_node, implem_block):
     return True
 
 # Class hooks
+#--------------------------------
 
 @meta.hook(Directive)
 def kc_init_class_block(self, ast):
