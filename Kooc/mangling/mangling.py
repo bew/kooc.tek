@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+# vim:set ft=python.pyrser:
 
 """
 This modules hold several function for mangling cnorm declaration
@@ -23,7 +24,7 @@ from mangling_symboles import *
 #should qualifier be mangled. Should be an attribute, should have setter
 qualifierInSignature = True
 
-# For use by caller of mangling:                                                                                                                                                            
+# For use by caller of mangling:
 OriginIsModule = DECLARATION_FROM_MODULE
 OriginIsClass = DECLARATION_FROM_CLASS
 OriginIsInstance = DECLARATION_FROM_INSTANCE
@@ -54,7 +55,7 @@ TYPEID = {
 def _hasParams(node):
     """
     Check if node has an _params attribute
-    
+
     :param node: the node who will be checked for _params attribute
     :type node: cnorm ast node
     :return: true if node has a _params attribute, else no
@@ -86,7 +87,7 @@ def _getQualifier(node):
     :type node: cnorm ast node (supposed cnorm.nodes.QualType)
     :return: single letter describing the qualifier
     :rtype: string
-    :raise Exception: if node's qualifier are unknown 
+    :raise Exception: if node's qualifier are unknown
     """
     qualifiers = {
         Qualifiers.CONST: QUALIFIER_CONST,
@@ -95,7 +96,7 @@ def _getQualifier(node):
     if node._qualifier in qualifiers:
         return qualifiers[node._qualifier]
     raise Exception('Unexpected qualifier: {}'.format( node._qualifier))
-    
+
 def _getSign(node):
     """
     Get the node _sign attributes with a default value
@@ -175,7 +176,7 @@ def getType(node):
     Get the mangling string for the node's type
 
     :param node: node whose type will be extracted
-    :type node: cnorm ast node        
+    :type node: cnorm ast node
     :return: mangling expression of node's type
     :rtype: string
     :raises Exception: if node type is unknown
@@ -201,7 +202,7 @@ def getType(node):
         return TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')
     else:
         raise Exception('Unexpected node : {}'.format(type(node)))
-    
+
 def _getSymbolKind(node):
     """
     Get the mangling string for the node symbol kind
@@ -220,7 +221,7 @@ def _getSymbolKind(node):
         return DECLARATION_AUTO
     else:
         raise Exception('Unexpected storage : {}'.format(node._storage))
-    
+
 def mangle(decl, origin=DECLARATION_FROM_MODULE, originName='', virtual=False):
     """
     Altere the declaration name to the declaration mangling string
@@ -258,11 +259,11 @@ def mangle(decl, origin=DECLARATION_FROM_MODULE, originName='', virtual=False):
 class Unmangler(grammar.Grammar):
     entry = "ini"
     grammar = format_mangling_string("""
-    
+
     ini =               [@ignore("null") __scope__:params virtual? kindOfSymbol:kos [
                                         '_' type:type #addListedType(params, type)
                                 ]+ '_' origin '_' identifier '_' identifier:cname #declRoot(_, kos, params, cname) eof]
-    
+
     virtual =           ["{DECORATOR_VIRTUAL}" '_']
 
     origin =            ["{DECLARATION_FROM_MODULE}" | "{DECLARATION_FROM_CLASS}" | "{DECLARATION_FROM_INSTANCE}"]
@@ -278,17 +279,17 @@ class Unmangler(grammar.Grammar):
                                 primaryType |
                                 composedType |
                                 funcType |
-                                qualType |      
-                                pointerType | 
-                                arrayType | 
+                                qualType |
+                                pointerType |
+                                arrayType |
                                 parenType |
                                 noneType
                         ]:>_]
 
-    primaryType =       ["{NODE_PRIMARYTYPE_CHAR}" '_' finalTypeParameter:option #createPrimaryType(_, option)]                       
-    
-    composedType =      ["{NODE_COMPOSEDTYPE_CHAR}" '_' finalTypeParameter:option #createComposedType(_, option)]                                                                   
-    
+    primaryType =       ["{NODE_PRIMARYTYPE_CHAR}" '_' finalTypeParameter:option #createPrimaryType(_, option)]
+
+    composedType =      ["{NODE_COMPOSEDTYPE_CHAR}" '_' finalTypeParameter:option #createComposedType(_, option)]
+
     funcType =          ["{NODE_FUNCTYPE_CHAR}" '_' finalTypeParameter:option #createFuncType(_, option)]
 
     finalTypeParameter =        [
@@ -298,7 +299,7 @@ class Unmangler(grammar.Grammar):
                                                 "{USERTYPE_UNION}" #typeUnion(_) |
                                                 "{USERTYPE_STRUCT}" #typeStruct(_) |
                                                 "{USERTYPE_NATIV}" #typeNativ(_)
-                                        ] 
+                                        ]
                                         '_' [nativTypeChar:nativ #setNativType(_, nativ) | identifier:identifier #setUserType(_, identifier)] '_' type:type #setSubtype(_, type)
                                 ]
 
@@ -339,7 +340,7 @@ class Unmangler(grammar.Grammar):
     identifier =        [num:identifierSize '_' [#consumeIdentifier(_, identifierSize)]]
 
     """)
-    
+
 @meta.hook(Unmangler)
 def declRoot(self, ast, kos, params, cname):
     subType = params.value[-1:][0]._ctype
@@ -357,7 +358,7 @@ def declRoot(self, ast, kos, params, cname):
 def declStatic(self, ast):
     ast.value = Storages.STATIC
     return True
-    
+
 @meta.hook(Unmangler)
 def declAuto(self, ast):
     ast.value = Storages.AUTO
