@@ -7,10 +7,10 @@ import sys, os
 from cnorm import nodes
 
 filePath = os.path.realpath(os.path.dirname(__file__))
-sys.path.insert(0, filePath + '/../src/directive')
+sys.path.insert(0, filePath + '/..')
 
-import directive
-import knodes
+from Kooc import directive
+from Kooc.directive import knodes
 
 class DirectiveTestCase(unittest.TestCase):
     """Base class for all Directive test cases"""
@@ -99,7 +99,7 @@ class DirectiveModule(DirectiveTestCase):
 
         ast = self.parse(source)
         self.assertTrue("Test" in ast.ktypes)
-        self.assertIsInstance(ast.ktypes["Test"], directive.KcModule)
+        self.assertIsInstance(ast.ktypes["Test"], knodes.KcModule)
 
         module = ast.ktypes["Test"]
         self.assertEqual(module.name, "Test")
@@ -312,4 +312,5 @@ class DirectiveCast(DirectiveTestCase):
         with self.assertRaises(Exception):
             self.parse(source)
 
-unittest.main()
+if __name__ == '__main__':
+    unittest.main()

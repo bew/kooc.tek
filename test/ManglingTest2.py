@@ -1,15 +1,17 @@
-#!/usr/bin/env python3                                                                        
-# -*- coding: utf-8 -*-                                                                      
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import sys
-
-sys.path.insert(0, '../src/mangling')
-import mangling
-from mangling_symboles import *
+import sys, os
 
 from cnorm.parsing.declaration import Declaration
 from cnorm.nodes import Decl
 from cnorm.passes import to_c
+
+filePath = os.path.realpath(os.path.dirname(__file__))
+sys.path.insert(0, filePath + '/..')
+
+from Kooc.mangling import mangling
+from Kooc.mangling.mangling_symboles import format_mangling_string
 
 class ManglingTest:
     """Allow to check if the mangling is conform to the documentation"""
@@ -18,10 +20,10 @@ class ManglingTest:
     okString = '[\033[92mPASSED\033[0m]'
     failString = '[\033[91mFAILED\033[0m]'
     tests = {}
-    
+
     def add_test(self, test_name, c_string, expected_mangling, origin, origin_name, expected_unmangling = None, context = [], is_virtual = False):
-        """ 
-        Add a test to the pool 
+        """
+        Add a test to the pool
 
         :param test_name: name of the test, to pass to run member function
         :type test_name: string
@@ -40,7 +42,7 @@ class ManglingTest:
         :param is_virtual: specify if the expression should be considered virtual
         :type is_virtual: bool
         """
-        
+
         if test_name in self.tests:
             raise Exception('Test {} has already been added'.format(test_name))
         self.tests[test_name] = {
@@ -58,10 +60,10 @@ class ManglingTest:
         """ Run all the test in the pool """
         for test_name in self.tests.keys():
             self.run(test_name)
-           
+
     def run(self, test_name):
-        """ 
-        Run a single test 
+        """
+        Run a single test
 
         :param test_name: a test name already specified to add_test
         :type test_name: string
@@ -105,9 +107,9 @@ class ManglingTest:
         return
 
     def _print_assert_equal(self, test_name, arg1, arg2,  format_string):
-        """ 
+        """
         print format_string and arg1 arg2, depnding of the result of arg1 == arg2
-        
+
         :param arg1: whatever you expect to be equal to arg2
         :type arg1: whaterver you want
         :param arg2: whatever you expect to be equal to arg1

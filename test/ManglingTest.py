@@ -8,9 +8,9 @@ from cnorm.parsing.declaration import Declaration
 from cnorm.passes import to_c
 
 filePath = os.path.realpath(os.path.dirname(__file__))
-sys.path.insert(0, filePath + '/../src/mangling')
+sys.path.insert(0, filePath + '/..')
 
-import mangling
+from Kooc.mangling import mangling
 
 class ManglingTest(unittest.TestCase):
     """Allow to check if the mangling is conform to the documentation"""

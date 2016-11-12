@@ -15,7 +15,7 @@ Further documention is writed using reST syntax
 from cnorm.nodes import Decl, FuncType, PrimaryType, ComposedType, QualType, ParenType, PointerType, ArrayType, Signs, Specifiers, Storages, Qualifiers
 from pyrser import grammar, meta, parsing, fmt
 from pyrser.parsing import node
-from mangling_symboles import *
+from .mangling_symboles import *
 
 #################
 ####  UTILS  ####

@@ -4,7 +4,7 @@ from cnorm.parsing.declaration import Declaration
 from cnorm import nodes
 from weakref import ref
 
-from .knodes import *
+from . import knodes
 
 class Directive(Grammar, Declaration):
     entry = "translation_unit"
@@ -178,14 +178,14 @@ def kc_is_top_level(self, current_block):
 
 @meta.hook(Directive)
 def kc_set_cast(self, ast, type_name, expr):
-    ast.set(KcCast(type_name, expr))
+    ast.set(knodes.KcCast(type_name, expr))
     return True
 
 @meta.hook(Directive)
 def kc_set_lookup(self, ast, ctx_node, member_node):
     ctx_name = self.value(ctx_node)
     member = self.value(member_node)
-    ast.set(KcLookup(ctx_name, member))
+    ast.set(knodes.KcLookup(ctx_name, member))
     return True
 
 @meta.hook(Directive)
@@ -193,7 +193,7 @@ def kc_set_call(self, ast, ctx_node, func_node, params_node):
     ctx_name = self.value(ctx_node)
     func_name = self.value(func_node)
     params = params_node.params
-    ast.set(KcCall(ctx_name, func_name, params))
+    ast.set(knodes.KcCall(ctx_name, func_name, params))
     return True
 
 @meta.hook(Directive)
@@ -235,8 +235,8 @@ def kc_new_import(self, current_block, name_node):
 @meta.hook(Directive)
 def kc_new_module(self, current_block, name_node, module_block):
     module_name = self.value(name_node)
-    KcModule.__init__(module_block, module_name)
-    module_block.__class__ = KcModule
+    knodes.KcModule.__init__(module_block, module_name)
+    module_block.__class__ = knodes.KcModule
 
     ktypes = current_block.ref.ktypes
     ktypes[module_name] = module_block
@@ -244,8 +244,8 @@ def kc_new_module(self, current_block, name_node, module_block):
 
 @meta.hook(Directive)
 def kc_new_implementation(self, current_block, name_node, implem_block):
-    KcImplementation.__init__(implem_block, self.value(name_node))
-    implem_block.__class__ = KcImplementation
+    knodes.KcImplementation.__init__(implem_block, self.value(name_node))
+    implem_block.__class__ = knodes.KcImplementation
     current_block.ref.body.append(implem_block)
     return True
 
@@ -281,7 +281,7 @@ def kc_add_class(self, current_block, name_node, inheritance_list, class_block):
         parents = inheritance_list.parents
 
     class_name = self.value(name_node)
-    klass = KcClass(class_name)
+    klass = knodes.KcClass(class_name)
 
     ktypes = current_block.ref.ktypes
     if class_name in ktypes:
@@ -302,7 +302,7 @@ def kc_add_class(self, current_block, name_node, inheritance_list, class_block):
         parent = ktypes[parent_name]
         klass.add_parent(parent)
 
-    # TODO: add members/virtual to KcClass instance
+    # TODO: add members/virtual to knodes.KcClass instance
     # add members
     # add virtuals
 
