@@ -4,11 +4,7 @@ from cnorm.parsing.declaration import Declaration
 from cnorm import nodes
 from weakref import ref
 
-# debug for pyrser grammar
-import pyrser.hooks.echo
-
-from knodes import *
-
+from .knodes import *
 
 class Directive(Grammar, Declaration):
     entry = "translation_unit"
