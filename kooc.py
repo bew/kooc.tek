@@ -19,6 +19,7 @@ parser.add_argument(
     action='store_true'
 )
 
+#TODO: enable verbose logging
 parser.add_argument(
     '-v',
     '--verbose',
@@ -27,11 +28,20 @@ parser.add_argument(
     action='store_true'
 )
 
+#TODO: enable debug logging
 parser.add_argument(
     '-d',
     '--debug',
     dest='debug',
     help='Enable debug (enable verbose too)',
+    action='store_true'
+)
+
+parser.add_argument(
+    '-f',
+    '--fail-file-error',
+    dest='fail_on_file_error',
+    help='Do not start if any file error',
     action='store_true'
 )
 
@@ -46,21 +56,29 @@ parser.add_argument(
 args = parser.parse_args()
 
 files_to_process = []
-for f in args.filenames:
-    if f == '-':
-        f = '/dev/stdin'
-    if not os.path.exists(f):
-        print('Unkown file: ' + f)
+for fpath in args.filenames:
+    if fpath == '-':
+        fpath = '/dev/stdin'
+    if not os.path.exists(fpath):
+        print('Unkown file: ' + fpath)
         continue
-    if not os.access(f, os.R_OK):
-        print('Cannot read file: ' + f)
+    if not os.path.isfile(fpath):
+        print('Not a regular file: ' + fpath)
         continue
-    files_to_process.append(f)
+    if not os.access(fpath, os.R_OK):
+        print('Cannot read file: ' + fpath)
+        continue
+    files_to_process.append(fpath)
 
 if len(files_to_process) == 0:
     print('No file to process')
     sys.exit()
 
+if len(args.filenames) != len(files_to_process) and args.fail_on_file_error:
+    print("File error detected, exiting")
+    sys.exit(42)
+
+print('# ' + str(len(files_to_process)) + " files to process")
 
 print('loading modules...', end='')
 sys.stdout.flush()
@@ -69,9 +87,10 @@ from Kooc.directive import directive
 print(' done')
 
 for filename_in in files_to_process:
-    f = open(filename_in, 'r')
+    f_in = open(filename_in, 'r')
+    print()
     print('Reading file ' + filename_in)
-    content = f.read()
+    content = f_in.read()
     print('======= Content ======')
     if content[-1:] == '\n':
         content = content[:-1]
