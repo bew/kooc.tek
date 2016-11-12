@@ -10,7 +10,7 @@ filePath = os.path.realpath(os.path.dirname(__file__))
 sys.path.insert(0, filePath + '/..')
 
 from Kooc import directive
-from Kooc.directive import knodes
+from Kooc import knodes
 
 class DirectiveTestCase(unittest.TestCase):
     """Base class for all Directive test cases"""

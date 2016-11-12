@@ -83,7 +83,7 @@ print('# ' + str(len(files_to_process)) + " files to process")
 print('loading modules...', end='')
 sys.stdout.flush()
 
-from Kooc.directive import directive
+from Kooc import directive
 print(' done')
 
 for filename_in in files_to_process:

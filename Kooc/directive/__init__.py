@@ -4,7 +4,7 @@ from cnorm.parsing.declaration import Declaration
 from cnorm import nodes
 from weakref import ref
 
-from . import knodes
+from Kooc import knodes
 
 class Directive(Grammar, Declaration):
     entry = "translation_unit"
