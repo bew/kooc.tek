@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser(
     prog='kooc',
-    description='Kind Of Objective C - by paccar_c\'s team'
+    description='Kind Of Objective C - Kooc to C transpiler - by paccar_c\'s team'
 )
 
 parser.add_argument(
@@ -19,7 +19,6 @@ parser.add_argument(
     action='store_true'
 )
 
-#TODO: enable verbose logging
 parser.add_argument(
     '-v',
     '--verbose',
@@ -28,7 +27,6 @@ parser.add_argument(
     action='store_true'
 )
 
-#TODO: enable debug logging
 parser.add_argument(
     '-d',
     '--debug',
@@ -39,9 +37,9 @@ parser.add_argument(
 
 parser.add_argument(
     '-f',
-    '--fail-file-error',
-    dest='fail_on_file_error',
-    help='Do not start if any file error',
+    '--force',
+    dest='force',
+    help='Transpile files even if errors',
     action='store_true'
 )
 
@@ -74,7 +72,7 @@ if len(files_to_process) == 0:
     print('No file to process')
     sys.exit()
 
-if len(args.filenames) != len(files_to_process) and args.fail_on_file_error:
+if len(args.filenames) != len(files_to_process) and not args.force:
     print("File error detected, exiting")
     sys.exit(42)
 
@@ -83,17 +81,24 @@ print('# ' + str(len(files_to_process)) + " files to process")
 print('loading modules...', end='')
 sys.stdout.flush()
 
-from Kooc import directive
+from Kooc.chief import ChiefKooc, KLoadingError
+
 print(' done')
 
-for filename_in in files_to_process:
-    f_in = open(filename_in, 'r')
-    print()
-    print('Reading file ' + filename_in)
-    content = f_in.read()
-    print('======= Content ======')
-    if content[-1:] == '\n':
-        content = content[:-1]
-    print(content)
-    print('=== End of Content ===')
+chief = ChiefKooc()
+
+# TODO: setup logging
+if args.verbose:
+    chief.verbose = True
+if args.debug:
+    chief.debug = True
+
+try:
+    chief.load_files(files_to_process)
+except KLoadingError as e:
+    # TODO: better loading error handling
+    print("There were errors while loading files")
+    sys.exit(42)
+
+chief.run()
 
