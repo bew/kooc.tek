@@ -239,7 +239,8 @@ def kc_new_module(self, current_block, name_node, module_block):
     module_block.__class__ = knodes.KcModule
 
     ktypes = current_block.ref.ktypes
-    ktypes[module_name] = module_block
+    ktypes[module_name] = ref(module_block)
+    current_block.ref.body.append(module_block)
     return True
 
 @meta.hook(Directive)
@@ -307,6 +308,7 @@ def kc_add_class(self, current_block, name_node, inheritance_list, class_block):
     # add virtuals
 
     ktypes[class_name] = klass
+    current_block.ref.body.append(klass)
     #current_block.ref.types[class_name] = ref(klass)
     return True
 
