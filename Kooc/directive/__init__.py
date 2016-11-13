@@ -5,6 +5,13 @@ from cnorm import nodes
 from weakref import ref
 
 from Kooc import knodes
+from Kooc.utils import KError
+
+class KParsingError(KError):
+    """Class for parsing error"""
+
+    # TODO: add file position in error
+
 
 class Directive(Grammar, Declaration):
     entry = "translation_unit"
@@ -216,8 +223,7 @@ def kc_new_import(self, current_block, name_node):
     if module_path.endswith('.kh'):
         header_path = module_path.replace('.kh', '.h')
     elif module_path.endswith('.kc'):
-        # TODO: use custom Exception classes
-        raise Exception("Cannot import kooc source module")
+        raise KParsingError("Cannot import kooc source module")
     else:
         header_path = module_path + '.h'
         module_path = module_path + '.kh'
@@ -292,14 +298,12 @@ def kc_add_class(self, current_block, name_node, inheritance_list, class_block):
         # => check that the re-opening does not mention an inheritance_list
         # or
         # => just don't care, and add the new inheritance_list to the existing one (if any) ?
-        raise Exception("Class re-opening not handled currently")
-        #return False
+        raise KParsingError("Class re-opening not handled currently")
 
     # add parents
     for parent_name in parents:
         if parent_name not in ktypes:
-            raise Exception("Unknown class parent type '%s'" % parent_name)
-            #return False
+            raise KParsingError("Unknown class parent type '%s'" % parent_name)
         parent = ktypes[parent_name]
         klass.add_parent(parent)
 
