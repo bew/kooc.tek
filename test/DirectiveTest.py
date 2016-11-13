@@ -99,9 +99,9 @@ class DirectiveModule(DirectiveTestCase):
 
         ast = self.parse(source)
         self.assertTrue("Test" in ast.ktypes)
-        self.assertIsInstance(ast.ktypes["Test"], knodes.KcModule)
+        self.assertIsInstance(ast.ktypes["Test"](), knodes.KcModule)
 
-        module = ast.ktypes["Test"]
+        module = ast.ktypes["Test"]()
         self.assertEqual(module.name, "Test")
 
         in_module_decl = module.body[0]
@@ -271,7 +271,7 @@ class DirectiveCast(DirectiveTestCase):
 
         ast = self.parse(source)
 
-        decl = ast.body[1] # ast.body[0] is the typedef
+        decl = ast.body[2] # ast.body[1] is the typedef
         self.assertIsInstance(decl._assign_expr, knodes.KcCast)
 
         cast = decl._assign_expr
