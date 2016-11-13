@@ -1,0 +1,13 @@
+#include <stdio.h>
+
+@import "simple.kh"
+
+@implementation MyModule
+{
+
+void my_function()
+{
+  printf("hello world\n");
+}
+
+}

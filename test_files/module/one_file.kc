@@ -1,0 +1,14 @@
+@module OneFileModule
+{
+int var;
+}
+
+@implementation OneFileModule
+{
+  int var = 42;
+}
+
+int main()
+{
+  return @!(int)[OneFileModule.var];
+}
