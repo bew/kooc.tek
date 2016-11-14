@@ -41,8 +41,8 @@ class Directive(Grammar, Declaration):
         ]
 
         kc_cast = [
-            "@!" '(' type_name :type ')' kc_expression :expr
-            #kc_set_cast(_, type, expr)
+            "@!" '(' type_name :type ')' kc_expression :>_
+            #kc_set_expr_type(_, type)
         ]
 
         // Kooc expression rules
@@ -168,7 +168,7 @@ class Directive(Grammar, Declaration):
 @meta.hook(Directive)
 def kc_init_root(self, ast):
     setattr(ast, "ktypes", {})
-    setattr(ast, "ktypenames", [])
+    setattr(ast, "ktypenames", []) # FIXME: useful ?
     setattr(ast, "kimports", [])
     return True
 
@@ -184,8 +184,8 @@ def kc_is_top_level(self, current_block):
 #--------------------------------
 
 @meta.hook(Directive)
-def kc_set_cast(self, ast, type_name, expr):
-    ast.set(knodes.KcCast(type_name, expr))
+def kc_set_expr_type(self, expr, type_name):
+    expr.expr_type = type_name
     return True
 
 @meta.hook(Directive)

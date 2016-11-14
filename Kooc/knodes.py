@@ -7,12 +7,12 @@ from cnorm import nodes
 class KcExpr(Node):
     """Node for all kooc expressions"""
 
-class KcCast(KcExpr):
-    """@!(type)[expr] node"""
-
-    def __init__(self, typ, expr):
-        self.type = typ
-        self.expr = expr
+    def __init__(self):
+        """
+        expr_type (None | type | array of type): The expression type
+        """
+        Node.__init__(self)
+        self.expr_type = None
 
 class KcLookup(KcExpr):
     """TODO: doc"""
