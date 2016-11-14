@@ -1,4 +1,4 @@
-from Kooc.utils import KError
+from Kooc.utils import KError, KUnsupportedFeature
 
 class KLoadingError(KError):
     """There were errors when loading files in Kooc"""
@@ -6,9 +6,8 @@ class KLoadingError(KError):
     def __init__(self, errors):
         """TODO: to be defined1. """
 
-        KError.__init__(self)
+        KError.__init__(self, 'Cannot load files, see .errors for the list')
         self.errors = errors
-        self.message = 'Cannot load files, see .errors for the list'
 
 
 
@@ -18,10 +17,8 @@ class KBadExtensionError(KError):
     def __init__(self, file_path):
         """TODO: doc"""
 
-        KError.__init__(self)
+        KError.__init__(self, 'Bad file extension of file \'{}\', must be .kc or .kh'.format(file_path))
         self.file_path = file_path
-        self.message = 'Bad file extension of file \'{}\', must be .kc or .kh'.format(file_path)
-
 
 
 class Koocer:
@@ -88,16 +85,22 @@ class ChiefKooc:
         file_errors = []
 
         for fpath in files:
-            if not (fpath[-3:] == '.kh' or fpath[-3:] == '.kc'):
-                file_errors.append(KBadExtensionError(fpath))
+            if fpath == '-':
+                file_errors.append(KUnsupportedFeature('Load source from stdin'))
                 continue
 
             try:
+                # try to open/read file
                 fhandle = open(fpath, 'r')
                 fhandle.close()
             except OSError as e:
                 file_errors.append(e)
                 continue
+
+            if not (fpath[-3:] == '.kh' or fpath[-3:] == '.kc'):
+                file_errors.append(KBadExtensionError(fpath))
+                continue
+
 
             self.files.append(fpath)
 
