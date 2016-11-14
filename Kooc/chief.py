@@ -25,15 +25,8 @@ class KBadExtensionError(KError):
 class Koocer:
     """Where shit happens"""
 
-    def __init__(self, fpath_in):
-        self.file_in = fpath_in
-
-        self.header = False
-        self.source = False
-        if fpath_in[-3:] == '.kh':
-            self.header = True
-        else:
-            self.source = True
+    def __init__(self, source_file_path):
+        self.source_file = source_file_path
         self.ast = None
 
     def parse(self):
@@ -43,29 +36,35 @@ class Koocer:
         from Kooc.directive import Directive
         parser = Directive()
 
-        self.ast = parser.parse_file(self.file_in)
+        self.ast = parser.parse_file(self.source_file)
 
-    # later: split this function
+    def apply_visitors(self):
+        # pass some visitors...
+        # - bind implem to module/class
+        # - type the AST
+
+        # - resolve context type in call/lookup (before/after ast typing ?)
+
+        # VISITOR DESIGN
+        # -> need a generator on all KcExpr of the AST
+        #    (ex: for KcLookup to resolve context type)
+        #
+        # -> need something else for the visitor 'resolve_type'
+        pass
+
     def run(self):
         self.parse()
+        ast = self.ast
 
+        # TODO: print() -> log.debug()
         print("====== AST ======")
         print(ast.to_yml())
         print("==== END AST ====")
 
-        # pass some visitors...
+        self.apply_visitors()
 
-        # get c_ast:
-        if self.header:
-            # - generate function prototypes
-            # - generate extern variable declarations
-            pass
-        if self.source:
-            # - generate module variable definition
-            pass
-        c_ast = ast # make a copy ?
         from Kooc.passes import to_c
-        return c_ast.to_c()
+        return ast.to_c()
 
 
 class ChiefKooc:
