@@ -34,7 +34,7 @@ int		main()
   res_int = [Test f :foo];
   res_int = [Test f :bar];
   [Test f :&foo];
-  [Test f :&bar]
+  [Test f :&bar];
   
   return 0;
 }
