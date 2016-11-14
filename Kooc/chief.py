@@ -34,18 +34,24 @@ class Koocer:
             self.header = True
         else:
             self.source = True
+        self.ast = None
 
-    # later: split this function
-    def run(self):
+    def parse(self):
+        if self.ast:
+            return
+
         from Kooc.directive import Directive
         parser = Directive()
 
-        # get AST: parse file
-        ast = parser.parse_file(self.file_in)
+        self.ast = parser.parse_file(self.file_in)
+
+    # later: split this function
+    def run(self):
+        self.parse()
+
         print("====== AST ======")
         print(ast.to_yml())
         print("==== END AST ====")
-        return ""
 
         # pass some visitors...
 
@@ -58,14 +64,15 @@ class Koocer:
             # - generate module variable definition
             pass
         c_ast = ast # make a copy ?
-        # cleanup c_ast to remove all kooc mentions
+        from Kooc.passes import to_c
         return c_ast.to_c()
 
 
 class ChiefKooc:
     """This is the koocer manager, it knows what to do and distribute work"""
 
-    def __init__(self, files = None):
+    def __init__(self, files = None, just_parse = False):
+        self.just_parse = just_parse
         self.verbose = None
         self.debug = None
         self.files = []
@@ -73,6 +80,10 @@ class ChiefKooc:
             self.load_files(files)
 
     def load_files(self, files):
+        if self.just_parse:
+            self.files = files
+            return True
+
         file_errors = []
 
         for fpath in files:
@@ -94,7 +105,26 @@ class ChiefKooc:
 
         return True
 
+    # FIXME: this function should return a dict of (file => ast)
+    def run_just_parse(self):
+        for fpath in self.files:
+            print()
+            print("====================================")
+            print("Processing file '" + fpath + "'")
+            print()
+
+            koocer = Koocer(fpath)
+            koocer.parse()
+
+            print("#    AST    #")
+            print(koocer.ast.to_yml())
+
     def run(self):
+        if self.just_parse:
+            self.run_just_parse()
+            return
+
+        # TODO: move this in other function
         for fpath_in in self.files:
             print()
             print("====================================")

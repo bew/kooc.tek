@@ -12,10 +12,10 @@ parser = ArgumentParser(
 )
 
 parser.add_argument(
-    '-y',
-    '--yml',
-    dest='yml',
-    help='Show AST nodes as yml',
+    '-p',
+    '--just-parse',
+    dest='just_parse',
+    help='Parse & show AST nodes',
     action='store_true'
 )
 
@@ -85,7 +85,10 @@ from Kooc.chief import ChiefKooc, KLoadingError
 
 print(' done')
 
-chief = ChiefKooc()
+if args.just_parse:
+    chief = ChiefKooc(just_parse = True)
+else:
+    chief = ChiefKooc()
 
 # TODO: setup logging
 if args.verbose:
