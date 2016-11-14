@@ -8,6 +8,7 @@ class KLoadingError(KError):
 
         KError.__init__(self)
         self.errors = errors
+        self.message = 'Cannot load files, see .errors for the list'
 
 
 
@@ -19,6 +20,7 @@ class KBadExtensionError(KError):
 
         KError.__init__(self)
         self.file_path = file_path
+        self.message = 'Bad file extension of file \'{}\', must be .kc or .kh'.format(file_path)
 
 
 
@@ -103,6 +105,9 @@ class ChiefKooc:
             raise KLoadingError(file_errors)
 
         return True
+
+    def nb_valid_files(self):
+        return len(self.files)
 
     # FIXME: this function should return a dict of (file => ast)
     def run_just_parse(self):

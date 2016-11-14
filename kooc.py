@@ -98,10 +98,15 @@ if args.debug:
 
 try:
     chief.load_files(files_to_process)
-except KLoadingError as e:
-    # TODO: better loading error handling
+except KLoadingError as kle:
     print("There were errors while loading files")
-    sys.exit(42)
+    for err in kle.errors:
+        print(err.message)
+    if not (chief.nb_valid_files() and args.force):
+        print()
+        print('Use --force (-f) to process the {} good files'.format(chief.nb_valid_files()))
+        print()
+        sys.exit(42)
 
 chief.run()
 
