@@ -1,14 +1,19 @@
 @module OneFileModule
 {
-int var;
+  int var = 40;
+
+  int get_var_and_add(int addit);
 }
 
 @implementation OneFileModule
 {
-  int var = 42;
+  int get_var_and_add(int addit)
+  {
+    return @!(int)[OneFileModule.var] + addit;
+  }
 }
 
 int main()
 {
-  return @!(int)[OneFileModule.var];
+  return @!(int)[OneFileModule get_var_and_add :2];
 }
