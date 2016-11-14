@@ -91,7 +91,7 @@
   \subsection{Le polymorphisme ad hoc}
   Les modules peuvent posséder des fonctions avec le même nom, mais des signatures différentes. La signature d'une fonction est l'ensemble des types de ses paramètres ainsi que son type de retour \footnote{Il est intéressant de noter que le type de retour ne fait pas partie des signatures de fonction en C++.}. On implémente ainsi une forme de polymorphisme ad hoc.
   \subsection{Programmation orientée objet}
-  Le KOOC est un langage de programmation orienté objet, fournissant a l'utilisateur l'abstraction nécessaire afin de développer selon ce paradigme. Cela se traduit par la présence de types abstraits, possédant des fonctions et des variables membres ; pouvant hériter les uns des autres et possédant des fonctions virtuelles.
+  Le KOOC est un langage de programmation orienté objet, fournissant à l'utilisateur l'abstraction nécessaire afin de développer selon ce paradigme. Cela se traduit par la présence de types abstraits, possédant des fonctions et des variables membres ; pouvant hériter les uns des autres et possédant des fonctions virtuelles.
 
   \section{Modules}
   \subsection{Import de module}
@@ -241,7 +241,7 @@ int main()
 
 \subsubsection{Invariance}
 L’invariance représente le cas où un ou plusieurs symboles coïncident avec celui recherché et un seul a exactement le bon type.\newline
-Si nous prenons le cas où nous avons deux \underline{variables a} tels que:
+Si nous prenons le cas où nous avons deux \underline{variables a} telles que:
 \begin{lstlisting}
 int a = 42;
 unsigned short a = 42;
@@ -250,7 +250,7 @@ Nous allons chercher l'appel de la \underline{fonction f} si une \underline{vari
 
 \subsubsection{Covariance et Contravariance}
 \paragraph{Types scalaires\\}
-Prenons, toujours dans le même contexte, le cas où nous avons deux \underline{variables a} tels que:
+Prenons, toujours dans le même contexte, le cas où nous avons deux \underline{variables a} telles que:
 \begin{lstlisting}
 char a = 42;
 long a = 42;
@@ -291,7 +291,7 @@ Ce type ne peut donc pas se convertir en un autre.\newline
 \newline
 
 \subsubsection{Résolution de type}
-Dans l'AST généré par un bloc de code, on remonte pour chaque opération toutes les signatures possible jusqu'à la racine de l'expression. On essaiera de trouver une signature commune pour résoudre la racine, ce qui correspond à une résolution par invariance. Dans le cas où toutes les signatures remontées par les lvalue et rvalue ne donnent pas une signature commune, on testera une résolution par covariance. Si cela échoue, une résolution par contravariance sera testée, mais en affichant un message pour prévenir l'utilisateur de la perte potentielle de donnée due à la conversion. Puis la racine propagera le nouveau type de manière recursive à ses lvalue et rvalue, forçant ainsi le typage de l'AST.
+Dans l'AST généré par un bloc de code, on remonte pour chaque opération toutes les signatures possibles jusqu'à la racine de l'expression. On essaiera de trouver une signature commune pour résoudre la racine, ce qui correspond à une résolution par invariance. Dans le cas où toutes les signatures remontées par les lvalue et rvalue ne donnent pas une signature commune, on testera une résolution par covariance. Si cela échoue, une résolution par contravariance sera testée, mais en affichant un message pour prévenir l'utilisateur de la perte potentielle de donnée due à la conversion. Puis la racine propagera le nouveau type de manière récursive à ses lvalue et rvalue, forçant ainsi le typage de l'AST.
 
 
 
@@ -325,6 +325,25 @@ Vous trouverez en annexe un test sur l'inférence de type scalaire.
   void          f(int *foo);
   void          f(float *bar);
 }
+\end{lstlisting}
+\begin{lstlisting}[title={Module.h}]
+/* Traduction du fichier Module.kh */
+
+extern int    ~~~Test~~~int~~~a~~~;
+extern char   ~~~Test~~~char~~~a~~~ = 'a';
+extern float  ~~~Test~~~float~~~a~~~ = 42.0;
+extern double ~~~Test~~~double~~~a~~~;
+
+int           ~~~Test~~~f~~~(int foo, float bar);
+float         ~~~Test~~~f~~~(int foo, float bar);
+void          ~~~Test~~~f~~~(const int *foo, const float *bar);
+float         ~~~Test~~~f~~~(int foo);
+float         ~~~Test~~~f~~~(float bar);
+int           ~~~Test~~~f~~~(float bar);
+int           ~~~Test~~~f~~~(int foo);
+void          ~~~Test~~~f~~~(int *foo);
+void          ~~~Test~~~f~~~(float *bar);
+
 \end{lstlisting}
 \begin{lstlisting}[title={Module.kc}]
 /* Gestion des import multiples */
@@ -380,6 +399,66 @@ Vous trouverez en annexe un test sur l'inférence de type scalaire.
   }
 }
 \end{lstlisting}
+\begin{lstlisting}[title={Module.c}]
+/* Gestion des import multiples - traduction de Module.kc */
+#include "test.h"
+#include "test.h"
+#include "test.h"
+
+int           ~~~Test~~~int~~~a~~~;
+char          ~~~Test~~~char~~~a~~~ = 'a';
+float         ~~~Test~~~float~~~a~~~ = 42.0;
+double        ~~~Test~~~double~~~a~~~;
+
+static char   ~~~Test~~~char~~~b~~~ = 'b';
+static float  ~~~Test~~~float~~~b~~~ = 21.0;
+
+int           ~~~Test~~~f~~~(int foo, float bar)
+{
+  return foo+((int)bar);
+}
+
+float         ~~~Test~~~f~~~(int foo, float bar)
+{
+  return ((float)foo)+bar;
+}
+
+void          ~~~Test~~~f~~~(const int *foo, const float *bar)
+{
+  printf("int: %i && float: %f\n", *foo, *bar);
+}
+
+float         ~~~Test~~~f~~~(int foo)
+{
+  return (float)foo;
+}
+
+float         ~~~Test~~~f~~~(float bar)
+{
+  return bar;
+}
+
+int           ~~~Test~~~f~~~(float bar)
+{
+  return (int)bar;
+}
+
+int           ~~~Test~~~f~~~(int foo)
+{
+  return foo;
+}
+
+void          ~~~Test~~~f~~~(int *foo)
+{
+  *foo = ~~~Test~~~char~~~b~~~;
+}
+
+void          ~~~Test~~~f~~~(float *bar)
+{
+  *bar = ~~~Test~~~float~~~b~~~;
+}
+\end{lstlisting}
+
 \subsection{Class}
 \begin{lstlisting}[title={Class.kh}]
 class  Test
@@ -400,7 +479,7 @@ class  Test
     }
   @member void          set_value(int value);
   @member void          set_value(float value);
-  void                  get_class_name(Test *);
+  char                  *get_class_name(Test *);
   void                  generate_new_secret(Test *);
 
   /* Some member functions for coplien form */
@@ -419,9 +498,48 @@ class  Test
   float                 get_value();
   void                  set_value(int value);
   void                  set_value(float value);
-  void                  get_class_name();
+  char                  *get_class_name();
   static void           generate_new_secret();
 }
+\end{lstlisting}
+\begin{lstlisting}[title={Class.h}]
+/* Traduction du fichier Class.kh */
+#ifndef TEST_H_
+# define TEST_H_
+
+typedef struct  kooc_s_Test {
+  int       ~~~Test~~~int~~~value~~~;
+  float     ~~~Test~~~float~~~value~~~;
+  int       ~~~Test~~~int~~~secret~~~;
+}               Test;
+
+int          ~~~Test~~~get_value~~~(Test *test);
+float        ~~~Test~~~get_value~~~(Test *test);
+void         ~~~Test~~~set_value~~~(Test *test, int value);
+void         ~~~Test~~~set_value~~~(Test *test, float value);
+char        *~~~Test~~~get_class_name~~~(Test *test);
+static void  ~~~Test~~~generate_new_secret~~~(Test *test);
+
+void         ~~~Test~~~init~~~(Test *test, int value_int, float value_float);
+void         ~~~Test~~~init~~~(Test *test, float value_float, int value_int);
+void         ~~~Test~~~init~~~(Test *test);
+
+Test         *~~~Test~~~alloc~~~();
+Test         *~~~Test~~~new~~~(int res_int, float res_float);
+Test         *~~~Test~~~new~~~(float res_float, int res_int);
+void          ~~~Test~~~delete~~~(Test *test);
+
+extern int    ~~~Test~~~int~~~secret~~~;
+
+int           ~~~Test~~~get_value~~~();
+float         ~~~Test~~~get_value~~~();
+void          ~~~Test~~~set_value~~~(int value);
+void          ~~~Test~~~set_value~~~(float value);
+char         *~~~Test~~~get_class_name~~~();
+static void   ~~~Test~~~generate_new_secret~~~();
+
+#endif /* !TEST_H_ */
+
 \end{lstlisting}
 \begin{lstlisting}[title={Class.kc}]
 @import "Test.kh"
@@ -507,6 +625,123 @@ class  Test
 
 }
 \end{lstlisting}
+\begin{lstlisting}[title={Class.c}]
+#include "Test.h"
+
+static int   ~~~Test~~~int~~~value~~~ = 42;
+static float ~~~Test~~~float~~~value~~~ = 42.0;
+int          ~~~Test~~~int~~~secret~~~ = 42;
+
+int          ~~~Test~~~get_value~~~(Test *test)
+{
+  return(test->~~~Test~~~int~~~value~~~);
+}
+
+float        ~~~Test~~~get_value~~~(Test *test)
+{
+  return (test->~~~Test~~~float~~~value~~~);
+}
+
+void         ~~~Test~~~set_value~~~(Test *test, int value)
+{
+  test->~~~Test~~~int~~~value~~~ = value;
+}
+
+void         ~~~Test~~~set_value~~~(Test *test, float value)
+{
+  test->~~~Test~~~float~~~value~~~ = value;
+}
+
+char        *~~~Test~~~get_class_name~~~(Test *test)
+{
+  ~~~Test~~~generate_new_secret~~~(test);
+  return ("Test");
+}
+
+static void  ~~~Test~~~generate_new_secret~~~(Test *test)
+{
+  test->~~~Test~~~int~~~secret~~~ *= 2;
+}
+
+void         ~~~Test~~~init~~~(Test *test, int value_int, float value_float)
+{
+  ~~~Test~~~float~~~value~~~ = value_float;
+  ~~~Test~~~int~~~value~~~ = value_int;
+}
+
+void         ~~~Test~~~init~~~(Test *test, float value_float, int value_int)
+{
+  ~~~Test~~~int~~~value~~~ = value_int;
+  ~~~Test~~~float~~~value~~~ = value_float;
+}
+
+void         ~~~Test~~~init~~~(Test *test)
+{
+  ~~~Test~~~int~~~value~~~ = 42;
+  ~~~Test~~~float~~~value~~~ = 42.0;
+  ~~~Test~~~int~~~secret~~~ = 42;
+}
+
+Test         *~~~Test~~~alloc~~~()
+{
+  Test *test;
+  test = malloc(sizeof(Test));
+  ~~~Test~~~init~~~(test);
+  return (test);
+}
+
+Test         *~~~Test~~~new~~~(int res_int, float res_float)
+{
+  Test *test;
+  test = ~~~Test~~~alloc~~~();
+  ~~~Test~~~init~~~(test, res_int, res_float);
+  return (test);
+}
+
+Test         *~~~Test~~~new~~~(float res_float, int res_int)
+{
+  Test *test;
+  test = ~~~Test~~~alloc~~~();
+  ~~~Test~~~init~~~(test, res_float, res_int);
+  return (test);
+}
+
+void          ~~~Test~~~delete~~~(Test *test)
+{
+  free(test);
+}
+
+int           ~~~Test~~~get_value~~~()
+{
+  return (~~~Test~~~int~~~value~~~);
+}
+
+float         ~~~Test~~~get_value~~~()
+{
+  return (~~~Test~~~float~~~value~~~);
+}
+
+void          ~~~Test~~~set_value~~~(int value)
+{
+  ~~~Test~~~int~~~value~~~ = value;
+}
+
+void          ~~~Test~~~set_value~~~(float value)
+{
+  ~~~Test~~~float~~~value~~~ = value;
+}
+
+char         *~~~Test~~~get_class_name~~~()
+{
+  ~~~Test~~~generate_new_secret~~~();
+  return ("Test");
+}
+
+static void   ~~~Test~~~generate_new_secret~~~()
+{
+  ~~~Test~~~int~~~secret~~~ *= 2;
+}
+\end{lstlisting}
 \subsection{Heritage}
 \begin{lstlisting}[title={Heritage.kh}]
 /*
@@ -528,9 +763,8 @@ class  Test
 	@member void    init();
 
 	@virtual void   clean();
-
 	@virtual void   attaque();
-        @virtual void   magie();
+  @virtual void   magie();
 }
 
 @class Orque : PeauxVertes
@@ -555,6 +789,112 @@ class  Test
 
         @virtual void   magie();
 }  
+\end{lstlisting}
+\begin{lstlisting}[title={Heritage.h}]
+/* Traduction du fichier Heritage.kc */
+
+#ifndef PEAUXVERTES_KMOD_H_
+# define PEAUXVERTES_KMOD_H_
+
+typedef struct __attribute__((packed)) kc_PeauVertes_instance
+{
+  int ~~~PeauxVertes~~~int~~~pv~~~;
+  int ~~~PeauxVertes~~~int~~~attaque~~~;
+  int ~~~PeauxVertes~~~int~~~agilite~~~;
+}                                     kc_PeauxVertes_instance;
+
+typedef struct  kc_PeauxVertes_vtable
+{
+  void (*~~~PeauxVertes~~~attaque~~~)(PeauVertes *self);
+  void (*~~~PeauxVertes~~~clean~~~)(PeauVertes *self);
+  void (*~~~PeauxVertes~~~magie~~~)(PeauVertes *self);
+}               kc_PeauxVertes_vtable;
+
+typedef struct            kc_PeauxVertes_metadata
+{
+    char                  *name;
+    char                  *inheritance_list;
+    kc_PeauxVertes_vtable vtable;
+}                         kc_PeauxVertes_metadata
+
+typedef struct                kc_PeauxVertes_interface
+{
+    kc_PeauxVertes_metadata   *meta;
+    kc_PeauxVertes_instance   instance;
+}                             kc_PeauxVertes_interface
+
+void  ~~~PeauxVertes~~~init~~~(PeauxVertes *self);
+void  ~~~PeauxVertes~~~clean~~~(PeauxVertes *self);
+void  ~~~PeauxVertes~~~attaque~~~(PeauxVertes *self);
+void  ~~~PeauxVertes~~~magie~~~(PeauxVertes *self);
+
+/* Orque */
+typedef struct __attribute__((packed))  kc_Orque_instance
+{
+  int ~~~PeauxVertes~~~int~~~pv~~~;
+  int ~~~PeauxVertes~~~int~~~attaque~~~;
+  int ~~~PeauxVertes~~~int~~~agilite~~~;
+}                                       kc_Orque_instance;
+
+typedef struct  kc_Orque_vtable
+{
+  void (*~~~Orque~~~attaque~~~)(Orque *self);
+  void (*~~~Orque~~~clean~~~)(Orque *self);
+  void (*~~~Orque~~~magie~~~)(Orque *self);
+}               kc_Orque_vtable;
+
+typedef struct            kc_Orque_metadata
+{
+    char                  *name;
+    char                  *inheritance_list;
+    kc_Orque_vtable       vtable;
+}                         kc_Orque_metadata
+
+typedef struct                kc_Orque_interface
+{
+    kc_Orque_metadata   *meta;
+    kc_Orque_instance   instance;
+}                             kc_Orque_interface
+
+void  ~~~Orque~~~init~~~(Orque *self);
+void  ~~~Orque~~~clean~~~(Orque *self);
+void  ~~~Orque~~~attaque~~~(Orque *self);
+void  ~~~Orque~~~magie~~~(Orque *self);
+
+/* Gobelin */
+typedef struct __attribute__((packed))  kc_Gobelin_instance
+{
+  int ~~~PeauxVertes~~~int~~~pv~~~;
+  int ~~~PeauxVertes~~~int~~~attaque~~~;
+  int ~~~PeauxVertes~~~int~~~agilite~~~;
+  int ~~~Gobelin~~~int~~~parchemin~~~;
+}                                       kc_Gobelin_instance;
+
+typedef struct  kc_Gobelin_vtable
+{
+  void (*~~~Gobelin~~~attaque~~~)(Gobelin *self);
+  void (*~~~Gobelin~~~clean~~~)(Gobelin *self);
+  void (*~~~Gobelin~~~magie~~~)(Gobelin *self);
+}               kc_Gobelin_vtable;
+
+typedef struct            kc_Gobelin_metadata
+{
+    char                  *name;
+    char                  *inheritance_list;
+    kc_Gobelin_vtable       vtable;
+}                         kc_Gobelin_metadata
+
+typedef struct                kc_Gobelin_interface
+{
+    kc_Gobelin_metadata   *meta;
+    kc_Gobelin_instance   instance;
+}                             kc_Gobelin_interface
+
+void  ~~~Gobelin~~~init~~~(Gobelin *self);
+void  ~~~Gobelin~~~clean~~~(Gobelin *self);
+void  ~~~Gobelin~~~magie~~~(Gobelin *self);
+
+#endif
 \end{lstlisting}
 \begin{lstlisting}[title={Heritage.kc}]
 #include <stdio.h>
@@ -628,6 +968,103 @@ class  Test
         }
 }
 \end{lstlisting}
+\begin{lstlisting}[title={Heritage.c}]
+#include <stdio.h>
+#include "peauxVertes.h"
+
+kc_PeauxVertes_metadata   PeauxVertes_metadata =
+{
+  "PeauxVertes",
+  "",
+  {
+    &~~~PeauxVertes~~~attaque~~~,
+    &~~~PeauxVertes~~~clean~~~,
+    &~~~PeauxVertes~~~magie~~~
+  }
+};
+
+kc_Orque_metadata   Orque_metadata =
+{
+  "Orque",
+  "PeauxVertes",
+  {
+    &~~~Orque~~~attaque~~~,
+    &~~~Orque~~~clean~~~,
+    &~~~Orque~~~magie~~~
+  }
+};
+
+kc_Gobelin_metadata   Gobelin_metadata =
+{
+  "Gobelin",
+  "PeauxVertes",
+  {
+    &~~~Gobelin~~~attaque~~~,
+    &~~~Gobelin~~~clean~~~,
+    &~~~Gobelin~~~magie~~~
+  }
+};
+
+void  ~~~PeauxVertes~~~init~~~(kc_PeauxVertes_interface *obj)
+{
+  obj->~~~PeauxVertes~~~int~~~pv~~~ = 0;
+  obj->~~~PeauxVertes~~~int~~~attaque~~~ = 0;
+  obj->~~~PeauxVertes~~~int~~~agilite~~~ = 0;
+}
+
+void  ~~~PeauxVertes~~~clean~~~(kc_PeauxVertes_interface *obj){}
+
+void  ~~~PeauxVertes~~~attaque~~~(kc_PeauxVertes_interface *obj)
+{
+  puts("Le peau-verte attaque !");
+}
+
+void  ~~~PeauxVertes~~~magie~~~(kc_PeauxVertes_interface *obj)
+{
+  puts("Le peau-verte lance un sort !");
+}
+
+void  ~~~Orque~~~init~~~(kc_Orque_interface *obj)
+{
+  obj->~~~PeauxVertes~~~int~~~pv~~~ = 16;
+  obj->~~~PeauxVertes~~~int~~~attaque~~~ = 15;
+  obj->~~~PeauxVertes~~~int~~~agilite~~~ = 8;
+}
+
+void  ~~~Orque~~~clean~~~(kc_Orque_interface *obj) {}
+
+void  ~~~Orque~~~attaque~~~(kc_Orque_interface *obj)
+{
+  puts("L'Orque attaque avec une massue!");
+}
+
+void  ~~~Orque~~~magie~~~(kc_Orque_interface *obj);
+{
+    puts("L'orque fait un rituel chamanique !");
+}
+
+void  ~~~Gobelin~~~init~~~(kc_Gobelin_interface *obj)
+{
+  obj->~~~PeauxVertes~~~int~~~pv~~~ = 16;
+  obj->~~~PeauxVertes~~~int~~~attaque~~~ = 15;
+  obj->~~~PeauxVertes~~~int~~~agilite~~~ = 8;
+  obj->~~~Gobelin~~~int~~~parchemin~~~ = 3
+}
+
+void  ~~~Gobelin~~~clean~~~(kc_Gobelin_interface *obj) {}
+
+void  ~~~Gobelin~~~magie~~~(kc_Gobelin_interface *obj)
+{
+  if (obj->~~~Gobelin~~~int~~~parchemin~~~ > 0)
+  {
+    puts("Le gobelin jette une boule de feu !");
+    obj->~~~Gobelin~~~int~~~parchemin~~~ -= 1;
+  } 
+  else
+    puts("Plus de parchemins !");
+}
+\end{lstlisting}
+
 \subsection{Test inferences}
 \begin{lstlisting}[title={testInference.kh}]
 @module Test
