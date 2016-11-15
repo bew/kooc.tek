@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# vim:set ft=python.pyrser:
 
 """
 This modules hold several function for mangling cnorm declaration
@@ -9,7 +8,7 @@ on future of Kooc's implementation
 
 It depend on cnorm.
 
-Further documention is writed using reST syntax
+Further documentation is written using reST syntax
 """
 
 from cnorm.nodes import Decl, FuncType, PrimaryType, ComposedType, QualType, ParenType, PointerType, ArrayType, Signs, Specifiers, Storages, Qualifiers
@@ -203,54 +202,61 @@ def getType(node):
     else:
         raise Exception('Unexpected node : {}'.format(type(node)))
 
-def _getSymbolKind(node):
+def _getSymbolKind(ctype):
     """
     Get the mangling string for the node symbol kind
 
-    :param node: node whose _identifier will be extracted
-    :type node: cnorm ast node (supposed root of declaration)
+    :param ctype: ctype of node whose _identifier will be extracted
+    :type ctype: cnorm ast ctype node
     :return: mangling expression of node's kind
     :rtype: string
-    :raise Exception: node has unexpected storage value
+    :raise Exception: ctype  has unexpected storage value
     """
-    if node._storage is Storages.STATIC:
+    if ctype._storage is Storages.STATIC:
         return DECLARATION_STATIC
-    elif node._storage is Storages.AUTO:
+    elif ctype._storage is Storages.AUTO:
         return DECLARATION_AUTO
-    elif node._storage is Storages.EXTERN:
+    elif ctype._storage is Storages.EXTERN:
         return DECLARATION_AUTO
     else:
-        raise Exception('Unexpected storage : {}'.format(node._storage))
+        raise Exception('Unexpected storage : {}'.format(ctype._storage))
 
-def mangle(decl, origin=DECLARATION_FROM_MODULE, originName='', virtual=False):
-    """
-    Altere the declaration name to the declaration mangling string
+class FullMangler:
+    def mangle_module(self, name, ctype, typeName, virtual=False):
+        return self.mangle(name, ctype, DECLARATION_FROM_MODULE, typeName, virtual)
 
-    :param decl: decl whose name will be altered
-    :type decl: cnorm ast node (supposed root of declaration)
-    :param origin: the origin of the symbol: is it from a module, a class, or an instance of class. Validity of origin won't be checked, be carefull
-    :type origin: value from mangling.OriginIs* (Module, Class, Instance) (ugly but python odesn't provide attribute on object so fuckit atm)
-    :param modulName: the name of the module from which decl is from. May be empty if unknown (if mangling out of @import or @implement scope)
-    :type modulName: string
-    :param origin: origin of the the decl. Default to DECLARATION_FROM_MODULE
-    :type origin: mangling.DECLARATION_FROM_[MODULE|INSTANCE|OBJECT]
-    :param originName: the name of origin struct. Default to ""
-    :type originNam: string
-    :return: mangling expression of node's kind
-    :rtype: cnorm ast node, same as the decl parameter
-    """
-    decl._name = '{kindOfSymbol}_{typeDesc}_{origin}_{originNameSize}_{originName}_{cSymbolSize}_{cSymbolName}'.format(
-        kindOfSymbol=_getSymbolKind(decl._ctype),
-        typeDesc=(_getParams(decl._ctype) + ('_' if _hasParams(decl._ctype) else '') + getType(decl._ctype)),
-        origin=origin,
-        originNameSize=len(originName),
-        originName=originName,
-        cSymbolSize=len(decl._name),
-        cSymbolName=decl._name
-    )
-    if (virtual):
-        decl._name = DECORATOR_VIRTUAL + '_' + decl._name
-    return decl
+    def mangle_class(self, name, ctype, typeName, virtual=False):
+        return self.mangle(name, ctype, DECLARATION_FROM_CLASS, typeName, virtual)
+
+    def mangle(self, name, ctype, origin=DECLARATION_FROM_MODULE, typeName='', virtual=False):
+        """
+        Altere the declaration name to the declaration mangling string
+
+        :param decl: decl whose name will be altered
+        :type decl: cnorm ast node (supposed root of declaration)
+        :param origin: the origin of the symbol: is it from a module, a class, or an instance of class. Validity of origin won't be checked, be carefull
+        :type origin: value from mangling.OriginIs* (Module, Class, Instance) (ugly but python odesn't provide attribute on object so fuckit atm)
+        :param modulName: the name of the module from which decl is from. May be empty if unknown (if mangling out of @import or @implement scope)
+        :type modulName: string
+        :param origin: origin of the the decl. Default to DECLARATION_FROM_MODULE
+        :type origin: mangling.DECLARATION_FROM_[MODULE|INSTANCE|CLASS]
+        :param typeName: the name of origin struct. Default to ""
+        :type originNam: string
+        :return: mangling expression of node's kind
+        :rtype: cnorm ast node, same as the decl parameter
+        """
+        mangled_name = '{kindOfSymbol}_{typeDesc}_{origin}_{originNameSize}_{typeName}_{cSymbolSize}_{cSymbolName}'.format(
+            kindOfSymbol=_getSymbolKind(ctype),
+            typeDesc=(_getParams(ctype) + ('_' if _hasParams(ctype) else '') + getType(ctype)),
+            origin=origin,
+            originNameSize=len(typeName),
+            typeName=typeName,
+            cSymbolSize=len(name),
+            cSymbolName=name
+        )
+        if (virtual):
+            mangled_name = DECORATOR_VIRTUAL + '_' + mangled_name
+        return mangled_name
 
 ####################
 #### UNMANGLING ####
