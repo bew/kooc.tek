@@ -1,10 +1,14 @@
+import copy
+
 from pyrser import meta, fmt
 from cnorm.passes import to_c
 from cnorm import nodes
 
 from Kooc import knodes
 
-from Kooc.mangling import mangling
+from Kooc.mangling.full import Mangler as FullMangler
+
+mangler = FullMangler()
 
 @meta.add_method(knodes.KcModule)
 def to_c(self):
@@ -13,27 +17,22 @@ def to_c(self):
 
     # - generate function prototypes
     for func in self.declallfuncs():
-        fname = func._name
-
         # mangle
-        #mangled_name = mangling.mangle(func._name, func._ctype, DECLARATION_FROM_MODULE, 'module_name')
-        # FIXME: mangling should not have side effect => should not modify the object !!
-        mangling.mangle(func, originName = self.name)
+        func._name = mangler.mangle_module(func._name, func._ctype, typeName = self.name)
 
         lsdata.append(func.to_c())
-        func._name = fname
 
     # - generate extern variable declarations
-    for var in self.declallvars():
-        vname = var._name
+    for v in self.declallvars():
+        var = copy.deepcopy(v)
 
         # mangle
-        mangling.mangle(var, originName = self.name)
+        var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
 
         var._ctype._storage = nodes.Storages.EXTERN
+        delattr(var, '_assign_expr')
 
         lsdata.append(var.to_c())
-        var._name = vname
 
     lsdata.append('// end of module\n\n')
 
@@ -46,28 +45,17 @@ def to_c(self):
 
     # - generate function prototypes
     for func in self.declallfuncs():
-        fname = func._name
-
         # mangle
-        #mangled_name = mangling.mangle(func._name, func._ctype, DECLARATION_FROM_MODULE, 'module_name')
-        # FIXME: mangling should not have side effect => should not modify the object !!
-        mangling.mangle(func, originName = self.name)
+        func._name = mangler.mangle_module(func._name, func._ctype, typeName = self.name)
 
         lsdata.append(func.to_c())
-        func._name = fname
 
     # - generate variable declarations & definition if needed
     for var in self.declallvars():
-        vname = var._name
-
-        # find in corresponding module/class if this variable needs to be initialized
-        # thoughts: there shoudn't be any uninitialized variable in implem..
-
         # mangle
-        mangling.mangle(var, originName = self.name)
+        var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
 
         lsdata.append(var.to_c())
-        var._name = vname
 
     # - generate variable definition from module/class
     #   FIXME: thoughts: the bind_mc's static vars should be merged with the implem vars ?
@@ -85,23 +73,23 @@ def to_c(self):
     #   FIXME: how to access ktypes to check type of context ?
     #   => context must be resolved before.. via an AST passe
 
-    #ctx = self.context() # self.context is a weakref
-    ctx = None
+    ctx = self.context() # self.context is a weakref
 
     if isinstance(ctx, knodes.KcClass):
+        # thoughts: how is class lookup different from module lookup ?
         pass # TODO: handle class lookup
 
     if isinstance(ctx, knodes.KcModule):
 
         # mangle member:
-        # FIXME: mangling is awful, I need to create a cnorm node for nothing...
-        decl = nodes.Decl(self.member, self.expr_type)
-        mangling.mangle(decl, originName = ctx.name)
-        return decl.to_c()
+        mangled_name = mangler.mangle_module(self.member, self.expr_type._ctype, typeName = ctx.name)
+
+        return nodes.Id(mangled_name).to_c() # or just return mangled_name ?
+
 
     # later: handle class instance, check class via expr_type of context
     # thoughts: the context will be a (local ?) variable, his type could
     #           be retrieved from the block ?
 
-    return ''
+    raise Exception('Unknown context type: {}'.format(ctx))
 

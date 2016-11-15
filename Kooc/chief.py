@@ -43,9 +43,20 @@ def visit_resolve_expr_context(ast):
     from Kooc.passes import yield_expr
 
     for expr in ast.yield_expr():
-        print(">>>>> Get expr from yield:", expr.__class__.__name__)
+        if not isinstance(expr, knodes.KcExpr): # limit to KcCall & KcLookup
+            continue
+        print(">>>>> Got KcExpr from yield:", expr.__class__.__name__)
         print(">>>>> Expr is:", expr)
-    return
+        ctx = expr.context
+        if isinstance(ctx, str):
+            if ctx in ast.ktypes:
+                expr.context = ast.ktypes[ctx]
+                continue
+            raise KVisitorError('KcExpr context "{}" is not a KType'.format(ctx))
+
+        else:
+            raise KVisitorError('KcExpr context is not a str: {}'.format(ctx))
+
 
 def apply_visitors(ast):
     # pass some visitors...
