@@ -221,7 +221,7 @@ def _getSymbolKind(ctype):
     else:
         raise Exception('Unexpected storage : {}'.format(ctype._storage))
 
-class FullMangler:
+class Mangler:
     def mangle_module(self, name, ctype, typeName, virtual=False):
         return self.mangle(name, ctype, DECLARATION_FROM_MODULE, typeName, virtual)
 
@@ -347,6 +347,20 @@ class Unmangler(grammar.Grammar):
 
     """)
 
+    def unmangle(self, mangled_name):
+        """
+        WIP. Construct an abstract syntax tree from a mangling string
+        Not fully implemented yet.
+        Module name and other meta data are lost here.
+
+        :param mangled_name: the mangled expression. It has to be valid.
+        :type mangled_name: string (supposely return from mangle function)
+        :return: the ast construced from mangled_name string
+        :rtype: cnorm ast node
+        """
+        res = self.parse(mangled_name)
+        return res
+
 @meta.hook(Unmangler)
 def declRoot(self, ast, kos, params, cname):
     subType = params.value[-1:][0]._ctype
@@ -357,7 +371,7 @@ def declRoot(self, ast, kos, params, cname):
         subType._params = params.value[:-1]
     except:
         pass
-    ast.decl = Decl(cname.value, subType)
+    ast.set(Decl(cname.value, subType))
     return True
 
 @meta.hook(Unmangler)
@@ -525,18 +539,3 @@ def addListedType(self, typelist, subtype):
         typelist.value.append(Decl('', subtype.value))
     return True
 
-def unmangle(mangling):
-    """
-    WIP. Construct an abstract syntax tree from a mangling string
-    Not fully implemented yet.
-    Module name and other meta data are lost here.
-
-    :param mangling: the mangling expression. It have to be a valid.
-    :type mangling: string (supposed return from mangle function)
-    :return: the ast construced from mangling string
-    :rtype: cnorm ast node
-    """
-    ast = Unmangler()
-    res = None
-    res = ast.parse(mangling)
-    return res

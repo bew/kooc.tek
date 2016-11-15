@@ -10,12 +10,13 @@ from cnorm.passes import to_c
 filePath = os.path.realpath(os.path.dirname(__file__))
 sys.path.insert(0, filePath + '/..')
 
-from Kooc.mangling import mangling
+from Kooc.mangling.full import Mangler as FullMangler
 
 class ManglingTest(unittest.TestCase):
     """Allow to check if the mangling is conform to the documentation"""
 
     cparse = Declaration()
+    mangler = FullMangler()
 
     # Module part
     def test_var_from_module(self):
@@ -27,7 +28,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -40,7 +41,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -53,7 +54,7 @@ class ManglingTest(unittest.TestCase):
     #     ast = self.cparse.parse(declaration);
     #     mangled = ""
     #     for index, decl in enumerate(ast.body):
-    #         mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+    #         mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
     #     self.assertEqual(mangled, solution)
 
@@ -66,7 +67,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -79,7 +80,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -92,7 +93,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -105,7 +106,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -118,7 +119,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -132,7 +133,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -145,7 +146,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -158,7 +159,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsModule, moduleName)._name
+            mangled = self.mangler.mangle_module(decl._name, decl._ctype, moduleName)
 
         self.assertEqual(mangled, solution)
 
@@ -172,7 +173,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -185,7 +186,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -198,7 +199,7 @@ class ManglingTest(unittest.TestCase):
     #     ast = self.cparse.parse(declaration);
     #     mangled = ""
     #     for index, decl in enumerate(ast.body):
-    #         mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+    #         mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
     #     self.assertEqual(mangled, solution)
 
@@ -211,7 +212,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -224,7 +225,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -237,7 +238,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -250,7 +251,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -263,7 +264,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -277,7 +278,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -290,7 +291,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 
@@ -303,7 +304,7 @@ class ManglingTest(unittest.TestCase):
         ast = self.cparse.parse(declaration);
         mangled = ""
         for index, decl in enumerate(ast.body):
-            mangled = mangling.mangle(decl, mangling.OriginIsClass, className)._name
+            mangled = self.mangler.mangle_class(decl._name, decl._ctype, className)
 
         self.assertEqual(mangled, solution)
 

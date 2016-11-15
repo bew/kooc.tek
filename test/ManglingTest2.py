@@ -10,13 +10,15 @@ from cnorm.passes import to_c
 filePath = os.path.realpath(os.path.dirname(__file__))
 sys.path.insert(0, filePath + '/..')
 
-from Kooc.mangling import mangling
+from Kooc.mangling import full
 from Kooc.mangling.mangling_symboles import format_mangling_string
 
 class ManglingTest:
     """Allow to check if the mangling is conform to the documentation"""
 
     cparse = Declaration()
+    mangler = full.Mangler()
+    unmangler = full.Unmangler()
     okString = '[\033[92mPASSED\033[0m]'
     failString = '[\033[91mFAILED\033[0m]'
     tests = {}
@@ -85,17 +87,19 @@ class ManglingTest:
         mangled = ''
         unmangled = ''
         try:
-            mangled = mangling.mangle(
-                c_ast.body[len(self.tests[test_name]['context'])],
+            decl = c_ast.body[len(self.tests[test_name]['context'])]
+            mangled = self.mangler.mangle(
+                decl._name,
+                decl._ctype,
                 self.tests[test_name]['origin'],
                 self.tests[test_name]['origin_name'],
                 virtual = self.tests[test_name]['is_virtual']
-            )._name
+            )
         except Exception as e:
             self._print_assert_equal(test_name, e, None, 'Mangling for \'{name}\' : {result}')
             return
         try:
-            unmangled = mangling.unmangle(mangled).decl.to_c()
+            unmangled = self.unmangler.unmangle(mangled).to_c()
         except Exception as e:
             self._print_assert_equal(test_name, e, None, 'Unmangling for \'{name}\' : {result}')
             return
@@ -134,7 +138,7 @@ unit_test.add_test(
         '{DECLARATION_AUTO}_{BEGINTYPE_SEPARATOR}_{NODE_PRIMARYTYPE_CHAR}_{USERTYPE_NATIV}_{NATIVTYPE_INT}_' +
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST'
 )
 
@@ -145,7 +149,7 @@ unit_test.add_test(
         '{DECLARATION_AUTO}_{BEGINTYPE_SEPARATOR}_{NODE_PRIMARYTYPE_CHAR}_{USERTYPE_NATIV}_{NATIVTYPE_INT}_' +
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_CLASS}_4_TEST_8_variable'
     ),
-    mangling.OriginIsClass,
+    full.OriginIsClass,
     'TEST'
 )
 
@@ -156,7 +160,7 @@ unit_test.add_test(
         '{DECLARATION_STATIC}_{BEGINTYPE_SEPARATOR}_{NODE_PRIMARYTYPE_CHAR}_{USERTYPE_NATIV}_{NATIVTYPE_INT}_' +
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST'
 )
 
@@ -167,7 +171,7 @@ unit_test.add_test(
         '{DECORATOR_VIRTUAL}_{DECLARATION_STATIC}_{BEGINTYPE_SEPARATOR}_{NODE_PRIMARYTYPE_CHAR}_{USERTYPE_NATIV}_{NATIVTYPE_INT}_' +
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST',
     is_virtual = True
 )
@@ -180,7 +184,7 @@ unit_test.add_test(
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___' +
         '{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST',
     context = ['typedef int toto;']
 )
@@ -194,7 +198,7 @@ unit_test.add_test(
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___' +
         '{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST'
 )
 
@@ -207,7 +211,7 @@ unit_test.add_test(
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___' +
         '{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST',
     expected_unmangling= 'int variable[];'
 )
@@ -222,7 +226,7 @@ unit_test.add_test(
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___' +
         '{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST'
 )
 
@@ -238,7 +242,7 @@ unit_test.add_test(
         '{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___' +
         '{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_variable'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST'
 )
 
@@ -252,7 +256,7 @@ unit_test.add_test(
         '{BEGINTYPE_SEPARATOR}_{NODE_FUNCTYPE_CHAR}_{USERTYPE_NATIV}_{NATIVTYPE_VOID}_{BEGINTYPE_SEPARATOR}_{NODE_NONETYPE_CHAR}___' +
         '{ENDTYPE_SEPARATOR}_{ENDTYPE_SEPARATOR}_{DECLARATION_FROM_MODULE}_4_TEST_8_function'
     ),
-    mangling.OriginIsModule,
+    full.OriginIsModule,
     'TEST'
 )
 
