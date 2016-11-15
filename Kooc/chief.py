@@ -20,6 +20,50 @@ class KBadExtensionError(KError):
         KError.__init__(self, 'Bad file extension of file \'{}\', must be .kc or .kh'.format(file_path))
         self.file_path = file_path
 
+class KVisitorError(KError):
+    """There was an error when visiting AST"""
+
+
+
+from Kooc import knodes
+# visitors # TODO: move to a standalone module ?
+def visit_bind_implem(ast):
+    for tl in ast.body:
+        if not isinstance(tl, knodes.KcImplementation):
+            continue
+
+        # find corresponding type (module/class)
+        if tl.name in ast.ktypes:
+            # bind implem to type
+            tl.bind_mc = ast.ktypes[tl.name]
+        else:
+            raise KVisitorError('Cannot find KType "{}", available KTypes: {}'.format(tl.name, ast.ktypes.keys()))
+
+def visit_resolve_expr_context(ast):
+    from Kooc.passes import yield_expr
+
+    for expr in ast.yield_expr():
+        print(">>>>> Get expr from yield:", expr.__class__.__name__)
+        print(">>>>> Expr is:", expr)
+    return
+
+def apply_visitors(ast):
+    # pass some visitors...
+    # - bind implem to module/class
+    visit_bind_implem(ast)
+    visit_resolve_expr_context(ast)
+
+    # - type the AST
+
+    # - resolve context type in call/lookup (before/after ast typing ?)
+
+    # VISITOR DESIGN
+    # -> need a generator on all KcExpr of the AST
+    #    (ex: for KcLookup to resolve context type)
+    #
+    # -> need something else for the visitor 'resolve_type'
+    pass
+
 
 class Koocer:
     """Where shit happens"""
@@ -37,33 +81,18 @@ class Koocer:
 
         self.ast = parser.parse_file(self.source_file)
 
-    def apply_visitors(self):
-        # pass some visitors...
-        # - bind implem to module/class
-        # - type the AST
-
-        # - resolve context type in call/lookup (before/after ast typing ?)
-
-        # VISITOR DESIGN
-        # -> need a generator on all KcExpr of the AST
-        #    (ex: for KcLookup to resolve context type)
-        #
-        # -> need something else for the visitor 'resolve_type'
-        pass
-
     def run(self):
         self.parse()
-        ast = self.ast
 
         # TODO: print() -> log.debug()
         print("====== AST ======")
-        print(ast.to_yml())
+        print(self.ast.to_yml())
         print("==== END AST ====")
 
-        self.apply_visitors()
+        apply_visitors(self.ast)
 
         from Kooc.passes import to_c
-        return ast.to_c()
+        return self.ast.to_c()
 
 
 class ChiefKooc:

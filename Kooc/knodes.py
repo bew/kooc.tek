@@ -4,7 +4,7 @@ from cnorm import nodes
 # Expression
 #--------------------------------
 
-class KcExpr(Node):
+class KcExpr(nodes.Expr):
     """Node for all kooc expressions"""
 
     def __init__(self):
