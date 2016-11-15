@@ -16,212 +16,208 @@ from pyrser import grammar, meta, parsing, fmt
 from pyrser.parsing import node
 from .mangling_symboles import *
 
-#################
-####  UTILS  ####
-#################
-
-#should qualifier be mangled. Should be an attribute, should have setter
-qualifierInSignature = True
-
-# For use by caller of mangling:
-OriginIsModule = DECLARATION_FROM_MODULE
-OriginIsClass = DECLARATION_FROM_CLASS
-OriginIsInstance = DECLARATION_FROM_INSTANCE
-
-# Please don't change this
-TYPEFORMATSTRING = BEGINTYPE_SEPARATOR + '_{}_{}_{}_' + ENDTYPE_SEPARATOR #nodeType, nodeParameter, subType
-TYPEID = {
-    (Signs.SIGNED, Specifiers.AUTO, 'char'): NATIVTYPE_SIGNED_CHAR,
-    (Signs.AUTO, Specifiers.AUTO, 'char'): NATIVTYPE_CHAR,
-    (Signs.UNSIGNED, Specifiers.AUTO, 'char'): NATIVTYPE_UNSIGNED_CHAR,
-    (Signs.AUTO, Specifiers.SHORT, 'int'): NATIVTYPE_SHORT_INT,
-    (Signs.UNSIGNED, Specifiers.SHORT, 'int'): NATIVTYPE_UNSIGNED_SHORT_INT,
-    (Signs.AUTO, Specifiers.AUTO, 'int'): NATIVTYPE_INT,
-    (Signs.UNSIGNED, Specifiers.AUTO, 'int'): NATIVTYPE_UNSIGNED_INT,
-    (Signs.AUTO, Specifiers.LONG, 'int'): NATIVTYPE_LONG_INT,
-    (Signs.UNSIGNED, Specifiers.LONG, 'int'): NATIVTYPE_UNSIGNED_LONG_INT,
-    (Signs.AUTO, Specifiers.AUTO, 'float'): NATIVTYPE_FLOAT,
-    (Signs.AUTO, Specifiers.AUTO, 'double'): NATIVTYPE_DOUBLE,
-    (Signs.AUTO, Specifiers.LONG, 'double'): NATIVTYPE_LONG_DOUBLE,
-    (Signs.AUTO, Specifiers.AUTO, 'void'): NATIVTYPE_VOID
-}
-
-
 ##################
 #### MANGLING ####
 ##################
 
-def _hasParams(node):
-    """
-    Check if node has an _params attribute
+class Mangler:    
 
-    :param node: the node who will be checked for _params attribute
-    :type node: cnorm ast node
-    :return: true if node has a _params attribute, else no
-    :rtype: bool
-    """
-    return hasattr(node, '_params') and len(node._params)
+    # For use by caller of mangling:
+    OriginIsModule = DECLARATION_FROM_MODULE
+    OriginIsClass = DECLARATION_FROM_CLASS
+    OriginIsInstance = DECLARATION_FROM_INSTANCE
 
-def _getParams(node):
-    """
-    Mangle node's parameters, including potential ellipsis
-
-    :param node: the node whose parameters will be mangled
-    :type node: cnorm ast node (supposed cnorm.nodes.ParenType or cnorm.nodes.FuncType)
-    :return: mangled parameters of node
-    :rtype: string
-    """
-    if not _hasParams(node):
-        return ''
-    paramsRaw = [getType(param._ctype) for param in node._params];
-    if hasattr(node, '_ellipsis') and node._ellipsis:
-        paramsRaw.append(TYPEFORMATSTRING.format(NODE_PRIMARYTYPE_CHAR, "{}_{}".format(USERTYPE_NATIV, NATIVTYPE_ELLIPSIS), TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')))
-    return '_'.join(paramsRaw)
-
-def _getQualifier(node):
-    """
-    Get the right qualifier mangling char from node
-
-    :param node: node whose qualifier will be extracted
-    :type node: cnorm ast node (supposed cnorm.nodes.QualType)
-    :return: single letter describing the qualifier
-    :rtype: string
-    :raise Exception: if node's qualifier are unknown
-    """
-    qualifiers = {
-        Qualifiers.CONST: QUALIFIER_CONST,
-        Qualifiers.VOLATILE: QUALIFIER_VOLATILE
+    # Please don't change this
+    TYPEFORMATSTRING = BEGINTYPE_SEPARATOR + '_{}_{}_{}_' + ENDTYPE_SEPARATOR #nodeType, nodeParameter, subType
+    TYPEID = {
+        (Signs.SIGNED, Specifiers.AUTO, 'char'): NATIVTYPE_SIGNED_CHAR,
+        (Signs.AUTO, Specifiers.AUTO, 'char'): NATIVTYPE_CHAR,
+        (Signs.UNSIGNED, Specifiers.AUTO, 'char'): NATIVTYPE_UNSIGNED_CHAR,
+        (Signs.AUTO, Specifiers.SHORT, 'int'): NATIVTYPE_SHORT_INT,
+        (Signs.UNSIGNED, Specifiers.SHORT, 'int'): NATIVTYPE_UNSIGNED_SHORT_INT,
+        (Signs.AUTO, Specifiers.AUTO, 'int'): NATIVTYPE_INT,
+        (Signs.UNSIGNED, Specifiers.AUTO, 'int'): NATIVTYPE_UNSIGNED_INT,
+        (Signs.AUTO, Specifiers.LONG, 'int'): NATIVTYPE_LONG_INT,
+        (Signs.UNSIGNED, Specifiers.LONG, 'int'): NATIVTYPE_UNSIGNED_LONG_INT,
+        (Signs.AUTO, Specifiers.AUTO, 'float'): NATIVTYPE_FLOAT,
+        (Signs.AUTO, Specifiers.AUTO, 'double'): NATIVTYPE_DOUBLE,
+        (Signs.AUTO, Specifiers.LONG, 'double'): NATIVTYPE_LONG_DOUBLE,
+        (Signs.AUTO, Specifiers.AUTO, 'void'): NATIVTYPE_VOID
     }
-    if node._qualifier in qualifiers:
-        return qualifiers[node._qualifier]
-    raise Exception('Unexpected qualifier: {}'.format( node._qualifier))
+    
+    def __init__(self, mangle_qualifiers = False):
+        self.qualifierInSignature = mangle_qualifiers
 
-def _getSign(node):
-    """
-    Get the node _sign attributes with a default value
+    def _hasParams(self, node):
+        """
+        Check if node has an _params attribute
 
-    :param node: node whose sign will be extracted
-    :type node: cnorm ast node (supposed cnorm.nodes.PrimaryType)
-    :return: node signs, or cnorm.nodes.Signs.AUTO if unknown
-    :rtype: integer (const from cnorm.nodes.Signs)
-    """
-    if hasattr(node, '_sign'):
-        return node._sign;
-    return Signs.AUTO;
+        :param node: the node who will be checked for _params attribute
+        :type node: cnorm ast node
+        :return: true if node has a _params attribute, else no
+        :rtype: bool
+        """
+        return hasattr(node, '_params') and len(node._params)
 
-def _getSizeSpecifier(node):
-    """
-    Get the node _specifier with a default value
+    def _getParams(self, node):
+        """
+        Mangle node's parameters, including potential ellipsis
 
-    :param ndeo: node whose specifier will be extracted
-    :type node: cnorm ast node
-    :return: node specifier, or cnorm.nodes.Specifiers.AUTO if unknown
-    :rtype: integer (const from cnorm.nodes.Specifiers)
-    """
-    if hasattr(node, '_specifier'):
-        return node._specifier
-    return Specifiers.AUTO
+        :param node: the node whose parameters will be mangled
+        :type node: cnorm ast node (supposed cnorm.nodes.ParenType or cnorm.nodes.FuncType)
+        :return: mangled parameters of node
+        :rtype: string
+        """
+        if not self._hasParams(node):
+            return ''
+        paramsRaw = [self.getType(param._ctype) for param in node._params];
+        if hasattr(node, '_ellipsis') and node._ellipsis:
+            paramsRaw.append(Mangler.TYPEFORMATSTRING.format(NODE_PRIMARYTYPE_CHAR, "{}_{}".format(USERTYPE_NATIV, NATIVTYPE_ELLIPSIS), Mangler.TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')))
+        return '_'.join(paramsRaw)
 
-def _getNativType(node):
-    """
-    Get the mangling string for the node's final type
+    def _getQualifier(self, node):
+        """
+        Get the right qualifier mangling char from node
 
-    :param node: node whose _identifier will be extracted
-    :type node: cnorm ast node (supposed cnorm.nodes.PrimaryType)
-    :return: mangling expression of node's identifier
-    :rtype: string
-    """
-    identifier = (_getSign(node), _getSizeSpecifier(node), node._identifier)
-    if identifier in TYPEID:
-        return '{}_{}'.format(USERTYPE_NATIV, TYPEID[identifier])
-    return '{}_{}_{}'.format(USERTYPE_TYPEDEF, len(node._identifier), node._identifier)
+        :param node: node whose qualifier will be extracted
+        :type node: cnorm ast node (supposed cnorm.nodes.QualType)
+        :return: single letter describing the qualifier
+        :rtype: string
+        :raise Exception: if node's qualifier are unknown
+        """
+        qualifiers = {
+            Qualifiers.CONST: QUALIFIER_CONST,
+            Qualifiers.VOLATILE: QUALIFIER_VOLATILE
+        }
+        if node._qualifier in qualifiers:
+            return qualifiers[node._qualifier]
+        raise Exception('Unexpected qualifier: {}'.format(node._qualifier))
 
-def _getComposedType(node, specifier):
-    """
-    Get the mangling string for the node's final type
+    def _getSign(self, node):
+        """
+        Get the node _sign attributes with a default value
 
-    :param node: node whose _identifier will be extracted
-    :type node: cnorm ast node (supposed cnorm.nodes.ComposedType)
-    ;param specifier: the node specifier
-    :type specifier: int (sipposed from cnorm.nodes.Specifiers)
-    :return: mangling expression of node's identifier
-    :rtype: string
-    """
+        :param node: node whose sign will be extracted
+        :type node: cnorm ast node (supposed cnorm.nodes.PrimaryType)
+        :return: node signs, or cnorm.nodes.Signs.AUTO if unknown
+        :rtype: integer (const from cnorm.nodes.Signs)
+        """
+        if hasattr(node, '_sign'):
+            return node._sign;
+        return Signs.AUTO;
 
-    return '{}_{}_{}'.format(specifier, len(node._identifier), node._identifier)
+    def _getSizeSpecifier(self, node):
+        """
+        Get the node _specifier with a default value
 
-def _getFinalType(node):
-    """
-    Get the final type mangling string for both comosed and primary types
+        :param ndeo: node whose specifier will be extracted
+        :type node: cnorm ast node
+        :return: node specifier, or cnorm.nodes.Specifiers.AUTO if unknown
+        :rtype: integer (const from cnorm.nodes.Specifiers)
+        """
+        if hasattr(node, '_specifier'):
+            return node._specifier
+        return Specifiers.AUTO
 
-    :param node: node whose _identifier will be extracted
-    :type node: cnorm ast node (supposed cnorm.nodes.ComposedType or cnorm.nodes.PrimaryType)
-    :return: mangled final type
-    :rtype: string
-    """
-    specifier = {
-        Specifiers.UNION: USERTYPE_UNION,
-        Specifiers.ENUM: USERTYPE_ENUM,
-        Specifiers.STRUCT: USERTYPE_STRUCT
-    };
-    if node._specifier in specifier:
-        return _getComposedType(node, specifier[node._specifier])
-    else:
-        return _getNativType(node)
+    def _getNativType(self, node):
+        """
+        Get the mangling string for the node's final type
+
+        :param node: node whose _identifier will be extracted
+        :type node: cnorm ast node (supposed cnorm.nodes.PrimaryType)
+        :return: mangling expression of node's identifier
+        :rtype: string
+        """
+        identifier = (self._getSign(node), self._getSizeSpecifier(node), node._identifier)
+        if identifier in Mangler.TYPEID:
+            return '{}_{}'.format(USERTYPE_NATIV, Mangler.TYPEID[identifier])
+        return '{}_{}_{}'.format(USERTYPE_TYPEDEF, len(node._identifier), node._identifier)
+
+    def _getComposedType(self, node, specifier):
+        """
+        Get the mangling string for the node's final type
+
+        :param node: node whose _identifier will be extracted
+        :type node: cnorm ast node (supposed cnorm.nodes.ComposedType)
+        ;param specifier: the node specifier
+        :type specifier: int (sipposed from cnorm.nodes.Specifiers)
+        :return: mangling expression of node's identifier
+        :rtype: string
+        """
+
+        return '{}_{}_{}'.format(specifier, len(node._identifier), node._identifier)
+
+    def _getFinalType(self, node):
+        """
+        Get the final type mangling string for both comosed and primary types
+
+        :param node: node whose _identifier will be extracted
+        :type node: cnorm ast node (supposed cnorm.nodes.ComposedType or cnorm.nodes.PrimaryType)
+        :return: mangled final type
+        :rtype: string
+        """
+        specifier = {
+            Specifiers.UNION: USERTYPE_UNION,
+            Specifiers.ENUM: USERTYPE_ENUM,
+            Specifiers.STRUCT: USERTYPE_STRUCT
+        };
+        if node._specifier in specifier:
+            return self._getComposedType(node, specifier[node._specifier])
+        else:
+            return self._getNativType(node)
 
 
-def getType(node):
-    """
-    Get the mangling string for the node's type
+    def getType(self, node):
+        """
+        Get the mangling string for the node's type
 
-    :param node: node whose type will be extracted
-    :type node: cnorm ast node
-    :return: mangling expression of node's type
-    :rtype: string
-    :raises Exception: if node type is unknown
-    """
+        :param node: node whose type will be extracted
+        :type node: cnorm ast node
+        :return: mangling expression of node's type
+        :rtype: string
+        :raises Exception: if node type is unknown
+        """
 
-    if isinstance(node, QualType):
-        if qualifierInSignature:
-            return TYPEFORMATSTRING.format(NODE_QUALTYPE_CHAR, _getQualifier(node), getType(node._decltype))
-        return getType(node._decltype)
-    elif isinstance(node, PointerType):
-        return TYPEFORMATSTRING.format(NODE_POINTERTYPE_CHAR, '', getType(node._decltype))
-    elif isinstance(node, ArrayType):
-        return TYPEFORMATSTRING.format(NODE_ARRAYTYPE_CHAR, '', getType(node._decltype))
-    elif isinstance(node, ParenType):
-        return TYPEFORMATSTRING.format(NODE_PARENTYPE_CHAR, _getParams(node), getType(node._decltype))
-    elif isinstance(node, FuncType):
-        return TYPEFORMATSTRING.format(NODE_FUNCTYPE_CHAR, _getFinalType(node), getType(node._decltype))
-    elif isinstance(node, ComposedType):
-        return TYPEFORMATSTRING.format(NODE_COMPOSEDTYPE_CHAR, _getFinalType(node), getType(node._decltype))
-    elif isinstance(node, PrimaryType):
-        return TYPEFORMATSTRING.format(NODE_PRIMARYTYPE_CHAR, _getFinalType(node), getType(node._decltype))
-    elif node is None:
-        return TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')
-    else:
-        raise Exception('Unexpected node : {}'.format(type(node)))
+        if isinstance(node, QualType):
+            if self.qualifierInSignature:
+                return Mangler.TYPEFORMATSTRING.format(NODE_QUALTYPE_CHAR, self._getQualifier(node), self.getType(node._decltype))
+            return self.getType(node._decltype)
+        elif isinstance(node, PointerType):
+            return Mangler.TYPEFORMATSTRING.format(NODE_POINTERTYPE_CHAR, '', self.getType(node._decltype))
+        elif isinstance(node, ArrayType):
+            return Mangler.TYPEFORMATSTRING.format(NODE_ARRAYTYPE_CHAR, '', self.getType(node._decltype))
+        elif isinstance(node, ParenType):
+            return Mangler.TYPEFORMATSTRING.format(NODE_PARENTYPE_CHAR, self._getParams(node), self.getType(node._decltype))
+        elif isinstance(node, FuncType):
+            return Mangler.TYPEFORMATSTRING.format(NODE_FUNCTYPE_CHAR, self._getFinalType(node), self.getType(node._decltype))
+        elif isinstance(node, ComposedType):
+            return Mangler.TYPEFORMATSTRING.format(NODE_COMPOSEDTYPE_CHAR, self._getFinalType(node), self.getType(node._decltype))
+        elif isinstance(node, PrimaryType):
+            return Mangler.TYPEFORMATSTRING.format(NODE_PRIMARYTYPE_CHAR, self._getFinalType(node), self.getType(node._decltype))
+        elif node is None:
+            return Mangler.TYPEFORMATSTRING.format(NODE_NONETYPE_CHAR, '', '')
+        else:
+            raise Exception('Unexpected node : {}'.format(type(node)))
 
-def _getSymbolKind(ctype):
-    """
-    Get the mangling string for the node symbol kind
+    def _getSymbolKind(self, ctype):
+        """
+        Get the mangling string for the node symbol kind
 
-    :param ctype: ctype of node whose _identifier will be extracted
-    :type ctype: cnorm ast ctype node
-    :return: mangling expression of node's kind
-    :rtype: string
-    :raise Exception: ctype  has unexpected storage value
-    """
-    if ctype._storage is Storages.STATIC:
-        return DECLARATION_STATIC
-    elif ctype._storage is Storages.AUTO:
-        return DECLARATION_AUTO
-    elif ctype._storage is Storages.EXTERN:
-        return DECLARATION_AUTO
-    else:
-        raise Exception('Unexpected storage : {}'.format(ctype._storage))
+        :param ctype: ctype of node whose _identifier will be extracted
+        :type ctype: cnorm ast ctype node
+        :return: mangling expression of node's kind
+        :rtype: string
+        :raise Exception: ctype  has unexpected storage value
+        """
+        if ctype._storage is Storages.STATIC:
+            return DECLARATION_STATIC
+        elif ctype._storage is Storages.AUTO:
+            return DECLARATION_AUTO
+        elif ctype._storage is Storages.EXTERN:
+            return DECLARATION_AUTO
+        else:
+            raise Exception('Unexpected storage : {}'.format(ctype._storage))
 
-class Mangler:
     def mangle_module(self, name, ctype, typeName, virtual=False):
         return self.mangle(name, ctype, DECLARATION_FROM_MODULE, typeName, virtual)
 
@@ -246,8 +242,8 @@ class Mangler:
         :rtype: cnorm ast node, same as the decl parameter
         """
         mangled_name = '{kindOfSymbol}_{typeDesc}_{origin}_{originNameSize}_{typeName}_{cSymbolSize}_{cSymbolName}'.format(
-            kindOfSymbol=_getSymbolKind(ctype),
-            typeDesc=(_getParams(ctype) + ('_' if _hasParams(ctype) else '') + getType(ctype)),
+            kindOfSymbol=self._getSymbolKind(ctype),
+            typeDesc=(self._getParams(ctype) + ('_' if self._hasParams(ctype) else '') + self.getType(ctype)),
             origin=origin,
             originNameSize=len(typeName),
             typeName=typeName,
@@ -467,7 +463,7 @@ def setNativType(self, ast, nativNode):
     if char == NATIVTYPE_ELLIPSIS:
         return True
     idSign = dict()
-    for (key, value) in TYPEID.items():
+    for (key, value) in Mangler.TYPEID.items():
         idSign[value] = key
     if char in idSign:
         ast.sign = idSign[char][0]
