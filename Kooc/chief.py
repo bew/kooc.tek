@@ -20,68 +20,21 @@ class KBadExtensionError(KError):
         KError.__init__(self, 'Bad file extension of file \'{}\', must be .kc or .kh'.format(file_path))
         self.file_path = file_path
 
-class KVisitorError(KError):
-    """There was an error when visiting AST"""
 
-
-
-from Kooc import knodes
-from cnorm import nodes
-# visitors # TODO: move to a standalone module ?
-def visit_bind_implem(ast):
-    for tl in ast.body:
-        if not isinstance(tl, knodes.KcImplementation):
-            continue
-
-        # find corresponding type (module/class)
-        if tl.name in ast.ktypes:
-            # bind implem to type
-            tl.bind_mc = ast.ktypes[tl.name]
-        else:
-            raise KVisitorError('Cannot find KType "{}", available KTypes: {}'.format(tl.name, ast.ktypes.keys()))
-
-def visit_resolve_expr_context(ast):
-    from Kooc.passes import yield_expr
-
-    for expr in ast.yield_expr():
-        if not isinstance(expr, knodes.KcExpr): # limit to KcCall & KcLookup
-            continue
-        print(">>>>> Got KcExpr from yield:", expr.__class__.__name__)
-
-        ctx = expr.context
-        if isinstance(ctx, str):
-            if ctx in ast.ktypes:
-                expr.context = ast.ktypes[ctx]
-                continue
-            raise KVisitorError('KcExpr context "{}" is not a KType'.format(ctx))
-
-        else:
-            raise KVisitorError('KcExpr context is not a str: {}'.format(ctx))
-
-def visit_type_c_cast(ast):
-    from Kooc.passes import yield_expr
-    from weakref import ref
-    print('Trying to find some C Cast')
-
-    for expr in ast.yield_expr():
-        if not isinstance(expr, nodes.Cast):
-            continue
-
-        print('>>>>> Found C Cast:', expr)
-        expr.expr_type = ref(expr.params[0])
-
-    print('End of trying to find some C Cast')
+from Kooc.passes.visitors import VisitorRunner
 
 def apply_visitors(ast):
+    vr = VisitorRunner(ast)
+
     # pass some visitors...
     # - bind implem to module/class
-    visit_bind_implem(ast)
+    vr.bind_implem()
 
     # - resolve context type in call/lookup (before/after ast typing ?)
-    visit_resolve_expr_context(ast)
+    vr.resolve_expr_context()
 
     # - apply expr_type from C cast (This could be done in full typing system)
-    visit_type_c_cast(ast)
+    vr.type_c_cast()
 
     # - add parent (allow reverse traversal)
     #visit_add_parents(ast)
