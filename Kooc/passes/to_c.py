@@ -10,6 +10,7 @@ from Kooc.mangling.full import Mangler as FullMangler
 
 mangler = FullMangler()
 
+# TODO: refactor to_c of implem & module
 @meta.add_method(knodes.KcModule)
 def to_c(self):
     lsdata = []
@@ -59,9 +60,17 @@ def to_c(self):
 
     # - generate variable definition from module/class
     #   FIXME: thoughts: the bind_mc's static vars should be merged with the implem vars ?
-    #mc = self.bind_mc() # bind_mc is a weakref to the corresponding module/class
-    #for var in mc.all_static_vars():
-    #    pass
+    mc = self.bind_mc() # bind_mc is a weakref to the corresponding module/class
+    for var in mc.declallvars():
+        if not hasattr(var, '_assign_expr'):
+            continue
+
+        # mangle
+        var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
+
+        lsdata.append(var.to_c())
+
+
 
     lsdata.append('// end of implem\n\n')
 
