@@ -1,6 +1,8 @@
 from pyrser.parsing.node import Node
 from cnorm import nodes
 
+from weakref import ref
+
 # Expression
 #--------------------------------
 
@@ -55,5 +57,11 @@ class KcClass:
     def add_parent(self, parent):
         if parent.name in self.parents:
             return True
-        self.parents[parent.name] = parent
-        #TODO: check for incompatibilities with other parents ?
+        self.parents[parent.name] = ref(parent)
+
+# Misc
+#--------------------------------
+
+class KcId(nodes.Id):
+    """A kooc Id"""
+

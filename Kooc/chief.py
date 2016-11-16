@@ -47,6 +47,7 @@ def visit_resolve_expr_context(ast):
             continue
         print(">>>>> Got KcExpr from yield:", expr.__class__.__name__)
         print(">>>>> Expr is:", expr)
+
         ctx = expr.context
         if isinstance(ctx, str):
             if ctx in ast.ktypes:

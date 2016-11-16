@@ -67,7 +67,7 @@ class Directive(Grammar, Declaration):
         // [Module function]
         // [Module function :param1 :param2]
         kc_call = [
-            kc_expr_context :ctx Base.id :func kc_call_params :params
+            kc_expr_context :ctx kc_id :func kc_call_params :params
             #kc_set_call(_, ctx, func, params)
         ]
 
@@ -161,7 +161,7 @@ class Directive(Grammar, Declaration):
             '}'
         ]
 
-        kc_id = [ Base.id ]
+        kc_id = [ @ignore('null') Base.id :id #kc_new_id(_, id) ]
 
     """
 
@@ -334,6 +334,14 @@ def kc_add_member(self, current_block):
 
 @meta.hook(Directive)
 def kc_add_virtual(self, current_block):
+    return True
+
+# Misc hooks
+#--------------------------------
+
+@meta.hook(Directive)
+def kc_new_id(self, ast, id_node):
+    ast.set(knodes.KcId(self.value(id_node)))
     return True
 
 # vim:ft=python.pyrser:
