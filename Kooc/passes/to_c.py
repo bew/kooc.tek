@@ -1,4 +1,4 @@
-import copy
+import copy, weakref
 
 from pyrser import meta, fmt
 from cnorm.passes import to_c
@@ -79,9 +79,6 @@ def to_c(self):
 @meta.add_method(knodes.KcLookup)
 def to_c(self):
     # find type of context
-    #   FIXME: how to access ktypes to check type of context ?
-    #   => context must be resolved before.. via an AST passe
-
     ctx = self.context() # self.context is a weakref
 
     if isinstance(ctx, knodes.KcClass):
@@ -99,6 +96,54 @@ def to_c(self):
     # later: handle class instance, check class via expr_type of context
     # thoughts: the context will be a (local ?) variable, his type could
     #           be retrieved from the block ?
+    #           => The type will be OK, resolved from typing visitor
 
     raise Exception('Unknown context type: {}'.format(ctx))
 
+#TODO: move this to : from Kooc.passes.typing import get_types
+#TODO: the type (ex: None or PrimaryType or [PrimaryType, ref(PrimaryType)]) must be wrapped in a KExprType
+#      (which allow intersection, merging, etc..)
+def get_types(ast):
+    def get_single_type(from_t):
+        if isinstance(from_t, weakref.ref):
+            return from_t()
+        return from_t
+
+    t = ast.expr_type
+
+    if isinstance(t, list):
+        types = []
+        for sub_t in t:
+            types.append(get_single_type(sub_t))
+        return types
+
+    return get_single_type(t)
+
+@meta.add_method(knodes.KcCall)
+def to_c(self):
+    ctx = self.context() # self.context is a weakref
+
+    if isinstance(ctx, knodes.KcClass):
+        pass # FIXME: need ?
+
+    if isinstance(ctx, knodes.KcModule):
+        # fetch all params types
+        params_types = []
+        for p in self.params:
+            params_types.append(nodes.Decl('', get_types(p)))
+            pass
+
+        # mangle
+        func_ctype = nodes.FuncType(self.expr_type._ctype._identifier, params_types)
+        mangled_name = mangler.mangle_module(self.function, func_ctype, typeName = ctx.name)
+
+        # create fake function call
+        fake_func_call = nodes.Func(nodes.Id(mangled_name), self.params)
+        return fake_func_call.to_c()
+
+    # later: handle class instance
+    # - assert context is class instance
+    # - get klass
+    # - do stuff
+
+    raise Exception('Unknown context type: {}'.format(ctx))

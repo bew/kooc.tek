@@ -26,6 +26,7 @@ class KVisitorError(KError):
 
 
 from Kooc import knodes
+from cnorm import nodes
 # visitors # TODO: move to a standalone module ?
 def visit_bind_implem(ast):
     for tl in ast.body:
@@ -46,7 +47,6 @@ def visit_resolve_expr_context(ast):
         if not isinstance(expr, knodes.KcExpr): # limit to KcCall & KcLookup
             continue
         print(">>>>> Got KcExpr from yield:", expr.__class__.__name__)
-        print(">>>>> Expr is:", expr)
 
         ctx = expr.context
         if isinstance(ctx, str):
@@ -58,16 +58,36 @@ def visit_resolve_expr_context(ast):
         else:
             raise KVisitorError('KcExpr context is not a str: {}'.format(ctx))
 
+def visit_type_c_cast(ast):
+    from Kooc.passes import yield_expr
+    from weakref import ref
+    print('Trying to find some C Cast')
+
+    for expr in ast.yield_expr():
+        if not isinstance(expr, nodes.Cast):
+            continue
+
+        print('>>>>> Found C Cast:', expr)
+        expr.expr_type = ref(expr.params[0])
+
+    print('End of trying to find some C Cast')
 
 def apply_visitors(ast):
     # pass some visitors...
     # - bind implem to module/class
     visit_bind_implem(ast)
+
+    # - resolve context type in call/lookup (before/after ast typing ?)
     visit_resolve_expr_context(ast)
+
+    # - apply expr_type from C cast (This could be done in full typing system)
+    visit_type_c_cast(ast)
+
+    # - add parent (allow reverse traversal)
+    #visit_add_parents(ast)
 
     # - type the AST
 
-    # - resolve context type in call/lookup (before/after ast typing ?)
 
     # VISITOR DESIGN
     # -> need a generator on all KcExpr of the AST
@@ -96,12 +116,17 @@ class Koocer:
     def run(self):
         self.parse()
 
-        # TODO: print() -> log.debug()
-        print("====== AST ======")
-        print(self.ast.to_yml())
-        print("==== END AST ====")
+        # TODO: print() -> log.verbose()
+        #print("====== AST ======")
+        #print(self.ast.to_yml())
+        #print("==== END AST ====")
 
         apply_visitors(self.ast)
+
+        # TODO: log.debug(self.ast.to_yml())
+        print("====== AST after visitors ======")
+        print(self.ast.to_yml())
+        print("==== END AST after visitors ====")
 
         from Kooc.passes import to_c
         return self.ast.to_c()
@@ -182,6 +207,7 @@ class ChiefKooc:
             koocer = Koocer(fpath_in)
             result_c_code = koocer.run()
 
+            print()
             print("#    Result C code:   #")
             print(result_c_code)
 

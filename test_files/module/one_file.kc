@@ -15,5 +15,5 @@
 
 int main()
 {
-  return @!(int)[OneFileModule get_var_and_add :2];
+  return @!(int)[OneFileModule get_var_and_add :(int)2];
 }

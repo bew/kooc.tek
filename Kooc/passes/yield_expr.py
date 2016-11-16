@@ -2,6 +2,8 @@ from pyrser import meta
 from cnorm import nodes
 from Kooc import knodes
 
+# TODO: rename visitor to 'all_exprs' ?
+
 def yield_if_expr_rec(maybe_expr):
     if isinstance(maybe_expr, nodes.Expr) \
             and not isinstance(maybe_expr, nodes.Decl) \
@@ -9,6 +11,24 @@ def yield_if_expr_rec(maybe_expr):
         yield maybe_expr
     if hasattr(maybe_expr, 'yield_expr'):
         for y in maybe_expr.yield_expr():
+            yield y
+
+# KOOC EXPR
+
+@meta.add_method(knodes.KcLookup)
+def yield_expr(self):
+    if isinstance(self.context, nodes.Expr):
+        for y in yield_if_expr_rec(self.context):
+            yield y
+
+@meta.add_method(knodes.KcCall)
+def yield_expr(self):
+    if isinstance(self.context, nodes.Expr):
+        for y in yield_if_expr_rec(self.context):
+            yield y
+
+    for p in self.params:
+        for y in yield_if_expr_rec(p):
             yield y
 
 # EXPR
