@@ -10,6 +10,18 @@ from Kooc.mangling.full import Mangler as FullMangler
 
 mangler = FullMangler()
 
+@meta.add_method(knodes.KcImport)
+def to_c(self):
+    lsdata = []
+
+    translation_table = dict.fromkeys(map(ord, '/;.%'), None)
+    unique_define = 'SOME_GARBAGE_' + self.file_name.translate(translation_table)
+    lsdata.append('#ifndef ' + unique_define)
+    lsdata.append('# define ' + unique_define)
+    lsdata.append('# include "%s"' % self.file_name)
+    lsdata.append('#endif')
+    return fmt.sep("\n", lsdata)
+
 # TODO: refactor to_c of implem & module
 @meta.add_method(knodes.KcModule)
 def to_c(self):

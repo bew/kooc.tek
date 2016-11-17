@@ -165,6 +165,15 @@ class Directive(Grammar, Declaration):
 
     """
 
+    def __init__(self, koocer):
+        Grammar.__init__(self)
+        Declaration.__init__(self)
+        self.koocer_module = koocer
+
+    def parse(self, source, cwd = '.'):
+        self.cwd = cwd
+        return Grammar.parse(self, source)
+
 @meta.hook(Directive)
 def kc_init_root(self, ast):
     setattr(ast, "ktypes", {})
@@ -218,6 +227,7 @@ def kc_call_params_add(self, ast, expr):
 
 @meta.hook(Directive)
 def kc_new_import(self, current_block, name_node):
+    # Form kheader path, header result
     module_path = self.value(name_node)[1:-1]
 
     if module_path.endswith('.kh'):
@@ -228,14 +238,24 @@ def kc_new_import(self, current_block, name_node):
         header_path = module_path + '.h'
         module_path = module_path + '.kh'
 
-    if module_path in current_block.ref.kimports:
-        return True
-    else:
-        current_block.ref.kimports.append(module_path)
+    # load, preprocess, parse:
+    kc = self.koocer_module(self.cwd + '/' + module_path)
+    kc.parse()
 
-    inc = """#include "%s";""" % header_path
-    raw = nodes.Raw(inc)
-    current_block.ref.body.append(raw)
+    sub_ast = kc.ast
+
+    # extract C types & Kooc types for merging
+    from collections import ChainMap
+
+    # merge kooc types
+    new_ktypes = ChainMap(current_block.ref.ktypes, sub_ast.ktypes)
+    current_block.ref.ktypes = new_ktypes
+
+    # merge C types
+    new_types = ChainMap(current_block.ref.types, sub_ast.types)
+    current_block.ref.types = new_types
+
+    current_block.ref.body.append(knodes.KcImport(module_path))
     return True
 
 @meta.hook(Directive)
@@ -244,8 +264,7 @@ def kc_new_module(self, current_block, name_node, module_block):
     knodes.KcModule.__init__(module_block, module_name)
     module_block.__class__ = knodes.KcModule
 
-    ktypes = current_block.ref.ktypes
-    ktypes[module_name] = ref(module_block)
+    current_block.ref.ktypes[module_name] = ref(module_block)
     current_block.ref.body.append(module_block)
     return True
 

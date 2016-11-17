@@ -7,24 +7,24 @@ from weakref import ref
 #--------------------------------
 
 class KcExpr(nodes.Expr):
-    """Node for all kooc expressions"""
+    """Base for all kooc expressions"""
 
     def __init__(self):
         """
-        expr_type (None | type | array of type): The expression type
+        expr_type (None | type | ref(type) | array of type): The expression type
         """
         Node.__init__(self)
         self.expr_type = None
 
 class KcLookup(KcExpr):
-    """TODO: doc"""
+    """Kooc type lookup"""
 
     def __init__(self, context, member):
         self.context = context
         self.member = member
 
 class KcCall(KcExpr):
-    """TODO: doc"""
+    """Kooc type/instance call node"""
 
     def __init__(self, context, function, params):
         self.context = context
@@ -34,27 +34,40 @@ class KcCall(KcExpr):
 # Top level
 #--------------------------------
 
-class KcModule(nodes.BlockStmt):
+# FIXME: herite de nodes.BlockStmt ? non...
+class KcTopLevel:
+    pass
+
+class KcImport(KcTopLevel):
+    """@import node"""
+
+    def __init__(self, file_name):
+        self.file_name = file_name
+
+# FIXME: use BlockStmt par composition ?
+class KcModule(nodes.BlockStmt, KcTopLevel):
     """@module node"""
 
     def __init__(self, name):
+        KcTopLevel.__init__(self)
         self.name = name
 
-class KcImplementation(nodes.BlockStmt):
+# FIXME: use BlockStmt par composition ?
+class KcImplementation(nodes.BlockStmt, KcTopLevel):
     """@implementation node"""
 
     def __init__(self, name):
+        KcTopLevel.__init__(self)
         self.name = name
 
-class KcClass:
+class KcClass(KcModule):
     """@class node"""
 
     def __init__(self, name):
-        self.name = name
+        KcModule.__init__(self, name)
         self.parents = {}
-        #FIXME: more to do here ?
 
-    def add_parent(self, parent):
+    def add_parent(self, parent): # FIXME: needed here ?
         if parent.name in self.parents:
             return True
         self.parents[parent.name] = ref(parent)
