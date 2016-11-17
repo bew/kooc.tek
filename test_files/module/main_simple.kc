@@ -1,0 +1,7 @@
+@import "simple.kh"
+
+int main()
+{
+  @!(void)[MyModule my_function];
+  return (0);
+}

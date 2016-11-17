@@ -1,4 +1,7 @@
 *.pyc
 __pycache__
 
+*.c
+*.h
+
 /kooc

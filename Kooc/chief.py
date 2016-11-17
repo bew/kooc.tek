@@ -2,7 +2,8 @@ import os
 import subprocess
 
 from Kooc.utils import KError, KUnsupportedFeature
-from Kooc.passes.visitors import VisitorRunner
+from Kooc.passes import visitors
+
 
 
 class KLoadingError(KError):
@@ -21,23 +22,6 @@ class KBadExtensionError(KError):
         KError.__init__(self, 'Bad file extension of file \'{}\', must be .kc or .kh'.format(file_path))
         self.file_path = file_path
 
-
-def apply_visitors(ast):
-    vr = VisitorRunner(ast)
-
-    # pass some visitors...
-    # - bind implem to module/class
-    vr.bind_implem()
-
-    # - resolve context type in call/lookup (before/after ast typing ?)
-    vr.resolve_expr_context()
-
-    # - apply expr_type from C cast (This could be done in full typing system)
-    vr.type_c_cast()
-
-    # - type the AST
-
-    pass
 
 
 class Koocer:
@@ -82,6 +66,27 @@ class Koocer:
         # Cache the ast for future use and to keep AST (k)types alive
         Koocer.cache_ast[self.source_file] = self.ast
 
+
+    def apply_visitors(self):
+        runners = [
+                visitors.linkchecks.LinkChecks(),
+
+                #visitors.types.ModuleBuilding(),
+                #visitors.types.ClassBuilding(),
+
+                #last: type the AST
+                visitors.typing.Typing(),
+                ]
+
+        # Register all visitors
+        for r in runners:
+            r.register()
+
+        # Run
+        for r in runners:
+            r.run(self.ast)
+
+
     def run(self):
         self.parse()
 
@@ -90,7 +95,8 @@ class Koocer:
         #print(self.ast.to_yml())
         #print("==== END AST ====")
 
-        apply_visitors(self.ast)
+        # pass some visitors...
+        self.apply_visitors()
 
         # TODO: log.debug(self.ast.to_yml())
         print("====== AST after visitors ======")
