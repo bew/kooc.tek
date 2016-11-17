@@ -1,4 +1,5 @@
 from pyrser import meta
+from pyrser.parsing import Node
 from cnorm import nodes
 from Kooc import knodes
 from weakref import ref
@@ -6,13 +7,15 @@ from weakref import ref
 # TODO: rename visitor to 'all_exprs' ?
 
 def yield_if_expr_rec(maybe_expr, parent):
+    if not isinstance(maybe_expr, Node):
+        return
+
     if not hasattr(maybe_expr, "parent"):
         setattr(maybe_expr, "parent", ref(parent))
 
-    if isinstance(maybe_expr, nodes.Expr) \
-            and not isinstance(maybe_expr, nodes.Decl) \
-            and not isinstance(maybe_expr, nodes.Id):
+    if isinstance(maybe_expr, nodes.Expr) and not isinstance(maybe_expr, (nodes.Decl, nodes.Id)):
         yield maybe_expr
+
     if hasattr(maybe_expr, 'yield_expr'):
         for y in maybe_expr.yield_expr():
             yield y

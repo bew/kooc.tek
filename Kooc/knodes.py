@@ -20,6 +20,7 @@ class KcLookup(KcExpr):
     """Kooc type lookup"""
 
     def __init__(self, context, member):
+        KcExpr.__init__(self)
         self.context = context
         self.member = member
 
@@ -27,6 +28,7 @@ class KcCall(KcExpr):
     """Kooc type/instance call node"""
 
     def __init__(self, context, function, params):
+        KcExpr.__init__(self)
         self.context = context
         self.function = function
         self.params = params
@@ -41,8 +43,9 @@ class KcTopLevel:
 class KcImport(KcTopLevel):
     """@import node"""
 
-    def __init__(self, file_name):
-        self.file_name = file_name
+    def __init__(self, fullpath, name):
+        self.file_fullpath = fullpath
+        self.file_name = name
 
 # FIXME: use BlockStmt par composition ?
 class KcModule(nodes.BlockStmt, KcTopLevel):

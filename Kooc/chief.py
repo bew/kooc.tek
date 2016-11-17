@@ -74,7 +74,10 @@ class Koocer:
         from Kooc.directive import Directive
         parser = Directive(Koocer)
 
-        self.ast = parser.parse(self.source_code, os.path.dirname(self.source_file))
+        file_dirname = os.path.dirname(self.source_file)
+        if len(file_dirname) > 0:
+            file_dirname += '/'
+        self.ast = parser.parse(self.source_code, file_dirname)
 
         # Cache the ast for future use and to keep AST (k)types alive
         Koocer.cache_ast[self.source_file] = self.ast

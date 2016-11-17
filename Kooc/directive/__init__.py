@@ -238,8 +238,10 @@ def kc_new_import(self, current_block, name_node):
         header_path = module_path + '.h'
         module_path = module_path + '.kh'
 
+    module_fullpath = self.cwd + module_path
+
     # load, preprocess, parse:
-    kc = self.koocer_module(self.cwd + '/' + module_path)
+    kc = self.koocer_module(module_fullpath)
     kc.parse()
 
     sub_ast = kc.ast
@@ -255,7 +257,7 @@ def kc_new_import(self, current_block, name_node):
     new_types = ChainMap(current_block.ref.types, sub_ast.types)
     current_block.ref.types = new_types
 
-    current_block.ref.body.append(knodes.KcImport(module_path))
+    current_block.ref.body.append(knodes.KcImport(module_fullpath, module_path))
     return True
 
 @meta.hook(Directive)

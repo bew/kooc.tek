@@ -15,11 +15,12 @@ def to_c(self):
     lsdata = []
 
     translation_table = dict.fromkeys(map(ord, '/;.%'), None)
-    unique_define = 'SOME_GARBAGE_' + self.file_name.translate(translation_table)
+    unique_define = 'SOME_GARBAGE_' + self.file_fullpath.translate(translation_table)
+
     lsdata.append('#ifndef ' + unique_define)
     lsdata.append('# define ' + unique_define)
     lsdata.append('# include "%s"' % self.file_name)
-    lsdata.append('#endif')
+    lsdata.append('#endif\n\n')
     return fmt.sep("\n", lsdata)
 
 # TODO: refactor to_c of implem & module
@@ -42,13 +43,13 @@ def to_c(self):
         # mangle
         var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
 
+        # transform to extern declaration
         var._ctype._storage = nodes.Storages.EXTERN
         delattr(var, '_assign_expr')
 
         lsdata.append(var.to_c())
 
     lsdata.append('// end of module\n\n')
-
     return fmt.sep("\n", lsdata)
 
 @meta.add_method(knodes.KcImplementation)
@@ -71,7 +72,6 @@ def to_c(self):
         lsdata.append(var.to_c())
 
     # - generate variable definition from module/class
-    #   FIXME: thoughts: the bind_mc's static vars should be merged with the implem vars ?
     mc = self.bind_mc() # bind_mc is a weakref to the corresponding module/class
     for var in mc.declallvars():
         if not hasattr(var, '_assign_expr'):
@@ -121,6 +121,7 @@ def get_types(ast):
             return from_t()
         return from_t
 
+    assert(ast.expr_type is not None)
     t = ast.expr_type
 
     if isinstance(t, list):
@@ -154,8 +155,8 @@ def to_c(self):
         return fake_func_call.to_c()
 
     # later: handle class instance
-    # - assert context is class instance
-    # - get klass
+    # - assert context is class instance : any pointer(KType)
+    # - get klass of KType
     # - do stuff
 
     raise Exception('Unknown context type: {}'.format(ctx))
