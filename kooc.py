@@ -44,6 +44,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '-n',
+    '--no-c',
+    dest='no_c',
+    help='Do not write C code to file.c',
+    action='store_true'
+)
+
+parser.add_argument(
     'filenames',
     help='process KFILE with kooc',
     metavar='KFILE',
@@ -55,10 +63,7 @@ args = parser.parse_args()
 
 from Kooc.chief import ChiefKooc, KLoadingError
 
-if args.just_parse:
-    chief = ChiefKooc(just_parse = True)
-else:
-    chief = ChiefKooc()
+chief = ChiefKooc(just_parse = args.just_parse, write_c = not args.no_c)
 
 # TODO: setup logging
 if args.verbose:

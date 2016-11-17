@@ -101,8 +101,9 @@ class Koocer:
 class ChiefKooc:
     """This is the koocer manager, it knows what to do and distribute work"""
 
-    def __init__(self, files = None, just_parse = False):
+    def __init__(self, files = None, just_parse = False, write_c = True):
         self.just_parse = just_parse
+        self.write_c = write_c
         self.verbose = None
         self.debug = None
         self.files = []
@@ -129,7 +130,7 @@ class ChiefKooc:
                 file_errors.append(e)
                 continue
 
-            if not (fpath[-3:] == '.kh' or fpath[-3:] == '.kc'):
+            if not self.get_out_path(fpath):
                 file_errors.append(KBadExtensionError(fpath))
                 continue
 
@@ -143,6 +144,17 @@ class ChiefKooc:
 
     def nb_valid_files(self):
         return len(self.files)
+
+    def get_out_path(self, file_in):
+        ext = file_in[-3:]
+        no_ext = file_in[:-3]
+
+        if ext == '.kh':
+            return no_ext + '.h'
+        elif ext == '.kc':
+            return no_ext + '.c'
+        else:
+            return False
 
     # FIXME: this function should return a dict of (file => ast)
     def run_just_parse(self):
@@ -172,6 +184,12 @@ class ChiefKooc:
 
             koocer = Koocer(fpath_in)
             result_c_code = koocer.run()
+
+            if self.write_c:
+                fpath_out = self.get_out_path(fpath_in)
+                handle_out = open(fpath_out, 'w')
+                handle_out.write(str(result_c_code))
+                handle_out.close()
 
             print()
             print("#    Result C code:   #")
