@@ -36,7 +36,6 @@ class KcCall(KcExpr):
 # Top level
 #--------------------------------
 
-# FIXME: herite de nodes.BlockStmt ? non...
 class KcTopLevel:
     pass
 
@@ -47,7 +46,6 @@ class KcImport(KcTopLevel):
         self.file_fullpath = fullpath
         self.file_name = name
 
-# FIXME: use BlockStmt par composition ?
 class KcModule(nodes.BlockStmt, KcTopLevel):
     """@module node"""
 
@@ -55,7 +53,6 @@ class KcModule(nodes.BlockStmt, KcTopLevel):
         KcTopLevel.__init__(self)
         self.name = name
 
-# FIXME: use BlockStmt par composition ?
 class KcImplementation(nodes.BlockStmt, KcTopLevel):
     """@implementation node"""
 
@@ -80,4 +77,11 @@ class KcClass(KcModule):
 
 class KcId(nodes.Id):
     """A kooc Id"""
+
+class KcTypedLiteral(nodes.Literal):
+    """C literal, with kooc type"""
+
+    def __init__(self, value : str, typ):
+        nodes.Literal.__init__(self, value)
+        self.expr_type = typ
 
