@@ -9,7 +9,7 @@ from . import KVisitorError, VisitorRunner
 class LinkChecks(VisitorRunner):
     """Import, Link, Checks Kooc nodes"""
 
-    def __init__(self, koocer):
+    def __init__(self, koocer = None):
         VisitorRunner.__init__(self)
         self.koocer = koocer
 
@@ -35,6 +35,10 @@ class LinkChecks(VisitorRunner):
 
     def resolve_imports(self):
         """Find all @import and fetch types from imported files"""
+
+        if not self.koocer:
+            # @import resolution disabled
+            return
 
         for tl in self.ast.body:
             if not isinstance(tl, knodes.KcImport):

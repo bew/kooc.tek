@@ -165,11 +165,6 @@ class Directive(Grammar, Declaration):
 
     """
 
-    def __init__(self, koocer):
-        Grammar.__init__(self)
-        Declaration.__init__(self)
-        self.koocer_module = koocer
-
     def parse(self, source, cwd = '.'):
         self.cwd = cwd
         return Grammar.parse(self, source)
@@ -178,7 +173,6 @@ class Directive(Grammar, Declaration):
 def kc_init_root(self, ast):
     setattr(ast, "ktypes", {})
     setattr(ast, "ktypenames", []) # FIXME: useful ?
-    setattr(ast, "kimports", [])
     return True
 
 # Checks hooks

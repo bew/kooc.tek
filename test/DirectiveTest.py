@@ -16,7 +16,7 @@ from Kooc import knodes
 class DirectiveTestCase(unittest.TestCase):
     """Base class for all Directive test cases"""
 
-    koocparser = Directive(Koocer)
+    koocparser = Directive()
 
     def parse(self, source : str):
         """Parse the given source"""

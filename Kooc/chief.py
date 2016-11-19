@@ -56,7 +56,7 @@ class Koocer:
             self.preprocess()
 
         from Kooc.directive import Directive
-        parser = Directive(Koocer)
+        parser = Directive()
 
         file_dirname = os.path.dirname(self.source_file)
         if len(file_dirname) > 0:
