@@ -17,9 +17,11 @@ def to_c(self):
     translation_table = dict.fromkeys(map(ord, '/;.%'), None)
     unique_define = 'SOME_GARBAGE_' + self.file_fullpath.translate(translation_table)
 
+    header_name = self.file_name[:-3] + '.h'
+
     lsdata.append('#ifndef ' + unique_define)
     lsdata.append('# define ' + unique_define)
-    lsdata.append('# include "%s"' % self.file_name)
+    lsdata.append('# include "%s"' % header_name)
     lsdata.append('#endif\n\n')
     return fmt.sep("\n", lsdata)
 
