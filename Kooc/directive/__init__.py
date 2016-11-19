@@ -240,23 +240,6 @@ def kc_new_import(self, current_block, name_node):
 
     module_fullpath = self.cwd + module_path
 
-    # load, preprocess, parse:
-    kc = self.koocer_module(module_fullpath)
-    kc.parse()
-
-    sub_ast = kc.ast
-
-    # extract C types & Kooc types for merging
-    from collections import ChainMap
-
-    # merge kooc types
-    new_ktypes = ChainMap(current_block.ref.ktypes, sub_ast.ktypes)
-    current_block.ref.ktypes = new_ktypes
-
-    # merge C types
-    new_types = ChainMap(current_block.ref.types, sub_ast.types)
-    current_block.ref.types = new_types
-
     current_block.ref.body.append(knodes.KcImport(module_fullpath, module_path))
     return True
 

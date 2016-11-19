@@ -69,7 +69,7 @@ class Koocer:
 
     def apply_visitors(self):
         runners = [
-                visitors.linkchecks.LinkChecks(),
+                visitors.linkchecks.LinkChecks(Koocer),
 
                 #visitors.types.ModuleBuilding(),
                 #visitors.types.ClassBuilding(),
