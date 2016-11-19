@@ -1,3 +1,6 @@
+from collections import ChainMap
+from weakref import ref
+
 from Kooc import knodes
 from cnorm import nodes
 
@@ -11,9 +14,24 @@ class LinkChecks(VisitorRunner):
         self.koocer = koocer
 
     def register(self):
+        self.register_visitor(self.grab_all_c_top_decl)
         self.register_visitor(self.resolve_imports)
         self.register_visitor(self.bind_implem)
         self.register_visitor(self.check_modules)
+
+
+    def grab_all_c_top_decl(self):
+        c_top_decl = ChainMap({})
+
+        for decl in self.ast.body:
+            if not isinstance(decl, nodes.Decl):
+                continue
+
+            if decl._name != '':
+                c_top_decl[decl._name] = ref(decl)
+
+        setattr(self.ast, "c_top_decl", c_top_decl)
+
 
     def resolve_imports(self):
         """Find all @import and fetch types from imported files"""
@@ -28,8 +46,12 @@ class LinkChecks(VisitorRunner):
 
             sub_ast = kc.ast
 
-            # extract C types & Kooc types for merging
-            from collections import ChainMap
+            # pass basic visitors
+            sub_linkchecks = LinkChecks(self.koocer)
+            sub_linkchecks.register()
+            sub_linkchecks.run(sub_ast)
+
+            # merge sub_ast informations
 
             # merge kooc types
             new_ktypes = ChainMap(self.ast.ktypes, sub_ast.ktypes)
@@ -38,6 +60,10 @@ class LinkChecks(VisitorRunner):
             # merge C types
             new_types = ChainMap(self.ast.types, sub_ast.types)
             self.ast.types = new_types
+
+            # merge C top declarations
+            new_c_top_decl = ChainMap(self.ast.c_top_decl, sub_ast.c_top_decl)
+            self.ast.c_top_decl = new_c_top_decl
 
 
     def bind_implem(self):

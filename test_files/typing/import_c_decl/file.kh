@@ -1,0 +1,7 @@
+#include "headers.h"
+
+@module File
+{
+  void f(int a);
+  void f(float a);
+}
