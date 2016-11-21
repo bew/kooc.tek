@@ -21,8 +21,8 @@ class TypingTest(unittest.TestCase):
     parser = Directive()
     typed_literal = TypedLiteral()
     
-    def test_invariance_param_Literal(self):
-        """Resolve invariance on one param with Literal node"""
+    def test_param_Literal(self):
+        """Resolve typing on one param with Literal node"""
         source = """
             @module Test
             {
@@ -39,7 +39,7 @@ class TypingTest(unittest.TestCase):
             }
         """
 
-        print("\n~~~~~~~~~~ test_invariance_param_Literal ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_param_Literal ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -64,8 +64,8 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcVoid.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
 
         
-    def test_invariance_params_Literal(self):
-        """Resolve invariance on multiple params with Literal node"""
+    def test_params_Literal(self):
+        """Resolve typing on multiple params with Literal node"""
         source = """
             @module Test
             {
@@ -80,7 +80,7 @@ class TypingTest(unittest.TestCase):
             }
         """
 
-        print("\n~~~~~~~~~~ test_invariance_params_Literal ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_params_Literal ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -103,8 +103,8 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDoubleInt.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
 
-    def test_invariance_param_Id(self):
-        """Resolve invariance on one param with Id node"""
+    def test_param_Id(self):
+        """Resolve typing on one param with Id node"""
         source = """
             @module Test
             {
@@ -125,7 +125,7 @@ class TypingTest(unittest.TestCase):
         """
 
 
-        print("\n~~~~~~~~~~ test_invariance_param_Id ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_param_Id ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -150,8 +150,8 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcVoid.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
 
 
-    def test_invariance_params_Id(self):
-        """Resolve invariance on multiple params with Id nodes"""
+    def test_params_Id(self):
+        """Resolve typing on multiple params with Id nodes"""
         source = """
             @module Test
             {
@@ -169,7 +169,7 @@ class TypingTest(unittest.TestCase):
             }
         """
 
-        print("\n~~~~~~~~~~ test_invariance_params_Id ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_params_Id ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -192,8 +192,8 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDoubleInt.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
 
-    def test_invariance_param_KcLookup(self):
-        """Resolve invariance on one param with KcLookup node"""
+    def test_param_KcLookup(self):
+        """Resolve typing on one param with KcLookup node"""
         source = """
             @module Test
             {
@@ -214,7 +214,7 @@ class TypingTest(unittest.TestCase):
         """
 
 
-        print("\n~~~~~~~~~~ test_invariance_param_KcLookup ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_param_KcLookup ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -239,8 +239,8 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcVoid.expr_type._identifier, nodes.PrimaryType("void")._identifier) # Function return type
 
 
-    def test_invariance_params_KcLookup(self):
-        """Resolve invariance on multiple params with KcLookup nodes"""
+    def test_params_KcLookup(self):
+        """Resolve typing on multiple params with KcLookup nodes"""
         source = """
             @module Test
             {
@@ -258,7 +258,7 @@ class TypingTest(unittest.TestCase):
             }
         """
 
-        print("\n~~~~~~~~~~ test_invariance_params_KcLookup ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_params_KcLookup ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -280,9 +280,37 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDoubleInt.params[0].expr_type._identifier, nodes.PrimaryType("double")._identifier) # Function param0 type
         self.assertEqual(funcDoubleInt.params[1].expr_type._identifier, nodes.PrimaryType("int")._identifier) # Function param1 type
 
+    def test_param_Binary(self):
+        """Resolve typing on param with Binary nodes"""
+        source = """
+            @module Test
+            {
+                void func(int var);
+                void func(double var);
+                void func();
+            }
+
+            int main()
+            {
+                [Test func :42+42];
+                [Test func :42.42+42.42];
+                [Test func];
+            }
+        """
+
+        print("\n~~~~~~~~~~ test_param_Binary ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+            
         
-    # def test_invariance_return(self):
-    #     """Resolve invariance on return"""
+    # def test_return(self):
+    #     """Resolve typing on return"""
     #     source = """
     #         @module Test
     #         {
