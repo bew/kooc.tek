@@ -440,6 +440,86 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
 
+
+    def test_param_Paren(self):
+        """Resolve typing on param with Paren nodes"""
+        source = """
+            @module Test
+            {
+                void func(int var);
+                void func(double var);
+                void func();
+            }
+
+            int main()
+            {
+                [Test func :1 ? (42+42) : (42+42)];
+                [Test func :1 ? (42.42+42.42) : (42.42+42.42)];
+                [Test func];
+            }
+        """
+
+        print("\n~~~~~~~~~~ test_param_Paren ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+
+        # Check funcInt
+        funcInt = ast.body[1].body.body[0].expr
+        self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+
+        # Check funcFloat
+        funcDouble = ast.body[1].body.body[1].expr
+        self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+
+        # Check funcVoid
+        funcVoid = ast.body[1].body.body[2].expr
+        self.assertEqual(funcVoid.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+
+        
+    def test_params_Paren(self):
+        """Resolve typing on params with Paren nodes"""
+        source = """
+            @module Test
+            {
+                void func(int foo, double bar);
+                void func(double foo, int bar);
+            }
+
+            int main()
+            {
+                [Test func :(1 ? 42+42 : 42+42) :(1 ? 42.42+42.42 : 42.42+42.42)];
+                [Test func :(1 ? 42.42+42.42 : 42.42+42.42) :(1 ? 42+42 : 42+42)];
+            }
+        """
+
+        print("\n~~~~~~~~~~ test_param_Paren ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+
+        # Check funcInt
+        funcInt = ast.body[1].body.body[0].expr
+        self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+
+        # Check funcFloat
+        funcDouble = ast.body[1].body.body[1].expr
+        self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+
         
 if __name__ == '__main__':
     unittest.main()

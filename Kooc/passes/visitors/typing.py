@@ -142,6 +142,17 @@ class Typing(VisitorRunner):
             ternary_expr.expr_type = ternary_expr.params[1].expr_type
 
         return ternary_expr
+
+    def resolve_Paren(self, paren_expr):
+        """Resolve the typing for a Paren node"""
+        # Check if the typing is already done
+        if hasattr(paren_expr, "expr_type") is True and isinstance(paren_expr.expr_type, nodes.PrimaryType):
+            return paren_expr
+
+        paren_expr.params = self.resolve_params(paren_expr.params)
+        paren_expr.expr_type = paren_expr.params[0].expr_type
+
+        return paren_expr
     
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
@@ -160,6 +171,8 @@ class Typing(VisitorRunner):
             return self.resolve_Binary(expr)
         elif isinstance(expr, nodes.Ternary):
             return self.resolve_Ternary(expr)
+        elif isinstance(expr, nodes.Paren):
+            return self.resolve_Paren(expr)
         elif type(expr) not in self.ignored_expression:
             raise KVisitorError("Unknow way to resolve expression: "+ expr.__class__.__name__)
 
@@ -263,5 +276,4 @@ class Typing(VisitorRunner):
 
     # missing
     # unary
-    # paren
     # func
