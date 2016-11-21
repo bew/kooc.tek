@@ -45,7 +45,7 @@ class Typing(VisitorRunner):
 
         # Check if at least a type has been found and set them
         if len(kccall_expr_type) <= 0:
-            raise KVisitorError("Cant find KcLookup '"+ kccall_name +"' for typing")
+            raise KVisitorError("Cant find KcLookup '"+ kccall_name +"' for typing") # TODO : Precise the params as criteria for search
         else:
             kccall_expr.expr_type = kccall_expr_type
             
@@ -70,7 +70,7 @@ class Typing(VisitorRunner):
 
         # Check if at least a type has been found and set them
         if len(kclookup_expr_type) <= 0:
-            raise KVisitorError("Cant find KcLookup '"+ kclookup_name +"' for typing") # TODO : Precise the params as criteria for search
+            raise KVisitorError("Cant find KcLookup '"+ kclookup_name +"' for typing")
         else:
             kclookup_expr.expr_type = kclookup_expr_type
             
@@ -112,21 +112,42 @@ class Typing(VisitorRunner):
 
     def resolve_Binary(self, binary_expr):
         """Resolve the typing for a Binary node"""
+        # Check if the typing is already done
+        if hasattr(binary_expr, "expr_type") is True and isinstance(binary_expr.expr_type, nodes.PrimaryType):
+            return binary_expr
+        
         binary_expr.params = self.resolve_params(binary_expr.params)
 
         # Check if the both operands are of the same type. TODO : Handle in case of multiple types
         if binary_expr.params[0].expr_type.__dict__ != binary_expr.params[1].expr_type.__dict__:
-            raise KVisitorError("The operands of the binary operation don't have the same type")
+            raise KVisitorError("The params of the binary node don't have the same type")
         else:
             binary_expr.expr_type = binary_expr.params[0].expr_type
             
         return binary_expr
-            
+
+    
+    def resolve_Ternary(self, ternary_expr):
+        """Resolve the typing for a Ternary node"""
+        # Check if the typing is already done
+        if hasattr(ternary_expr, "expr_type") is True and isinstance(ternary_expr.expr_type, nodes.PrimaryType):
+            return ternary_expr
+
+        ternary_expr.params = self.resolve_params(ternary_expr.params)
+
+        # Check if the both operands are of the same type. TODO : Handle in case of multiple types
+        if ternary_expr.params[1].expr_type.__dict__ != ternary_expr.params[2].expr_type.__dict__:
+            raise KVisitorError("The params of the ternary node don't have the same type")
+        else:
+            ternary_expr.expr_type = ternary_expr.params[1].expr_type
+
+        return ternary_expr
+    
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
 
     def choose_resolve_method(self, expr):
-        """Choose the way to resolve the invariance by type of node"""
+        """Choose the way to resolve the typing by type of node"""
         if isinstance(expr, knodes.KcCall):
             return self.resolve_KcCall(expr)
         elif isinstance(expr, knodes.KcLookup):
@@ -137,9 +158,10 @@ class Typing(VisitorRunner):
             return self.resolve_Id(expr)
         elif isinstance(expr, nodes.Binary):
             return self.resolve_Binary(expr)
+        elif isinstance(expr, nodes.Ternary):
+            return self.resolve_Ternary(expr)
         elif type(expr) not in self.ignored_expression:
-            print("Unknow way to resolve expression: "+ expr.__class__.__name__)
-            return expr
+            raise KVisitorError("Unknow way to resolve expression: "+ expr.__class__.__name__)
 
         
     def get_root(self, expr):
@@ -231,3 +253,15 @@ class Typing(VisitorRunner):
                 return types
 
         return get_single_type(t)
+
+
+
+    # where to resolve as a parent:
+    # kccall
+    # binary
+    # ternary
+
+    # missing
+    # unary
+    # paren
+    # func
