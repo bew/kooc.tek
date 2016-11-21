@@ -10,6 +10,7 @@ from weakref import ref
 class Typing(VisitorRunner):
 
     typed_literal = TypedLiteral()
+    ignored_expression = [nodes.Raw]
     
     def register(self):
         """Register all the visitors for the runner"""
@@ -69,7 +70,7 @@ class Typing(VisitorRunner):
 
         # Check if at least a type has been found and set them
         if len(kclookup_expr_type) <= 0:
-            raise KVisitorError("Cant find KcLookup '"+ kclookup_name +"' for typing")
+            raise KVisitorError("Cant find KcLookup '"+ kclookup_name +"' for typing") # TODO : Precise the params as criteria for search
         else:
             kclookup_expr.expr_type = kclookup_expr_type
             
@@ -112,8 +113,14 @@ class Typing(VisitorRunner):
     def resolve_Binary(self, binary_expr):
         """Resolve the typing for a Binary node"""
         binary_expr.params = self.resolve_params(binary_expr.params)
-        if binary_expr.params[0].expr_type._identifier != binary_expr.params[1].expr_type._identifier:
-            KVisitorError("not same type")
+
+        # Check if the both operands are of the same type. TODO : Handle in case of multiple types
+        if binary_expr.params[0].expr_type.__dict__ != binary_expr.params[1].expr_type.__dict__:
+            raise KVisitorError("The operands of the binary operation don't have the same type")
+        else:
+            binary_expr.expr_type = binary_expr.params[0].expr_type
+            
+        return binary_expr
             
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
@@ -130,7 +137,7 @@ class Typing(VisitorRunner):
             return self.resolve_Id(expr)
         elif isinstance(expr, nodes.Binary):
             return self.resolve_Binary(expr)
-        else:
+        elif type(expr) not in self.ignored_expression:
             print("Unknow way to resolve expression: "+ expr.__class__.__name__)
             return expr
 
