@@ -50,14 +50,26 @@ class KcModule(nodes.BlockStmt, KcTopLevel):
     """@module node"""
 
     def __init__(self, name):
+        nodes.BlockStmt.__init__(self, [])
         KcTopLevel.__init__(self)
+        self.name = name
+
+    def init_from_blockstmt(self, name):
+        KcTopLevel.__init__(self)
+        self.__class__ = KcModule
         self.name = name
 
 class KcImplementation(nodes.BlockStmt, KcTopLevel):
     """@implementation node"""
 
     def __init__(self, name):
+        nodes.BlockStmt.__init__(self, [])
         KcTopLevel.__init__(self)
+        self.name = name
+
+    def init_from_blockstmt(self, name):
+        KcTopLevel.__init__(self)
+        self.__class__ = KcImplementation
         self.name = name
 
 class KcClass(KcModule):
@@ -66,6 +78,18 @@ class KcClass(KcModule):
     def __init__(self, name):
         KcModule.__init__(self, name)
         self.parents = {}
+        self.members = []
+        self.virtuals = []
+
+    def init_from_blockstmt(self, name):
+        KcModule.__init__(self, name)
+        self.__class__ = KcClass
+        if not hasattr(self, "parents"):
+            self.parents = {}
+        if not hasattr(self, "members"):
+            self.members = []
+        if not hasattr(self, "virtuals"):
+            self.virtuals = []
 
     def add_parent(self, parent): # FIXME: needed here ?
         if parent.name in self.parents:
