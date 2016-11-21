@@ -107,5 +107,5 @@ class KcTypedLiteral(nodes.Literal):
 
     def __init__(self, value : str, typ):
         nodes.Literal.__init__(self, value)
-        self.expr_type = typ
+        self.expr_type = [typ]
 
