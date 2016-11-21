@@ -231,12 +231,12 @@ class TypingTest(unittest.TestCase):
 
         # # Check funcFloat
         funcDouble = ast.body[1].body.body[1].expr
-        self.assertEqual(funcDouble.expr_type._identifier, nodes.PrimaryType("void")._identifier) # Function return type
-        self.assertEqual(funcDouble.params[0].expr_type._identifier, nodes.PrimaryType("double")._identifier) # Function param0 type
+        self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
 
         # Check funcVoid
         funcVoid = ast.body[1].body.body[2].expr
-        self.assertEqual(funcVoid.expr_type._identifier, nodes.PrimaryType("void")._identifier) # Function return type
+        self.assertEqual(funcVoid.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
 
 
     def test_params_KcLookup(self):
@@ -270,16 +270,17 @@ class TypingTest(unittest.TestCase):
             
         # Check funcInt
         funcIntDouble = ast.body[1].body.body[0].expr
-        self.assertEqual(funcIntDouble.expr_type._identifier, nodes.PrimaryType("void")._identifier) # Function return type
-        self.assertEqual(funcIntDouble.params[0].expr_type, nodes.PrimaryType("int")) # Function param0 type
-        self.assertEqual(funcIntDouble.params[1].expr_type, nodes.PrimaryType("double")) # Function param1 type
+        self.assertEqual(funcIntDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcIntDouble.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        self.assertEqual(funcIntDouble.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param1 type
 
         # Check funcFloat
         funcDoubleInt = ast.body[1].body.body[1].expr
-        self.assertEqual(funcDoubleInt.expr_type._identifier, nodes.PrimaryType("void")._identifier) # Function return type
-        self.assertEqual(funcDoubleInt.params[0].expr_type._identifier, nodes.PrimaryType("double")._identifier) # Function param0 type
-        self.assertEqual(funcDoubleInt.params[1].expr_type._identifier, nodes.PrimaryType("int")._identifier) # Function param1 type
+        self.assertEqual(funcDoubleInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcDoubleInt.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        self.assertEqual(funcDoubleInt.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
+        
     def test_param_Binary(self):
         """Resolve typing on param with Binary nodes"""
         source = """
@@ -307,34 +308,6 @@ class TypingTest(unittest.TestCase):
         for runner in runners:
             runner.register();
             runner.run(ast)
-            
-        
-    # def test_return(self):
-    #     """Resolve typing on return"""
-    #     source = """
-    #         @module Test
-    #         {
-    #             int funcInt();
-    #             float funcFloat();
-    #             void funcVoid();
-    #         }
-
-    #         int main()
-    #         {
-    #             int foo = [Test funcInt :foo];
-    #             float bar = [Test funcFloat :bar];
-    #             [Test funcVoid];
-    #         }
-    #     """
-        
-    #     ast = self.parser.parse(source)
-    #     runners = [
-    #         visitors.linkchecks.LinkChecks(),
-    #         visitors.typing.Typing()
-    #         ]
-    #     for runner in runners:
-    #         runner.register();
-    #         runner.run(ast)
 
             
 if __name__ == '__main__':
