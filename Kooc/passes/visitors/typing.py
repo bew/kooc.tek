@@ -7,6 +7,18 @@ from . import KVisitorError, VisitorRunner
 
 from weakref import ref
 
+# TODO:
+#
+# where to handle multiple type:
+# kccall
+# binary
+# ternary
+#
+# missing:
+# func
+#
+# notes:
+# need to handle assignment
 class Typing(VisitorRunner):
 
     typed_literal = TypedLiteral()
@@ -143,6 +155,7 @@ class Typing(VisitorRunner):
 
         return ternary_expr
 
+    
     def resolve_Paren(self, paren_expr):
         """Resolve the typing for a Paren node"""
         # Check if the typing is already done
@@ -153,7 +166,19 @@ class Typing(VisitorRunner):
         paren_expr.expr_type = paren_expr.params[0].expr_type
 
         return paren_expr
-    
+
+
+    def resolve_Unary(self, unary_expr):
+        """Resolve the typing for a Unary node"""
+        # Check if the typing is already done
+        if hasattr(unary_expr, "expr_type") is True and isinstance(unary_expr.expr_type, nodes.PrimaryType):
+            return unary_expr
+        
+        unary_expr.params = self.resolve_params(unary_expr.params)
+        unary_expr.expr_type = unary_expr.params[0].expr_type
+            
+        return unary_expr
+
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
 
@@ -173,6 +198,8 @@ class Typing(VisitorRunner):
             return self.resolve_Ternary(expr)
         elif isinstance(expr, nodes.Paren):
             return self.resolve_Paren(expr)
+        elif isinstance(expr, nodes.Unary):
+            return self.resolve_Unary(expr)
         elif type(expr) not in self.ignored_expression:
             raise KVisitorError("Unknow way to resolve expression: "+ expr.__class__.__name__)
 
@@ -266,14 +293,3 @@ class Typing(VisitorRunner):
                 return types
 
         return get_single_type(t)
-
-
-
-    # where to resolve as a parent:
-    # kccall
-    # binary
-    # ternary
-
-    # missing
-    # unary
-    # func
