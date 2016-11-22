@@ -188,7 +188,7 @@ def kc_is_top_level(self, current_block):
 
 @meta.hook(Directive)
 def kc_set_expr_type(self, expr, type_name):
-    expr.expr_type = type_name
+    expr.expr_type = type_name._ctype
     return True
 
 @meta.hook(Directive)
