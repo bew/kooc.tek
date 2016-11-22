@@ -103,14 +103,17 @@ class Typing(VisitorRunner):
         id_name = id_expr.value
 
         # Search among all declaration the id declaration by it's name
-        for decl in self.get_root(id_expr).body:
-            if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
-                continue
-            elif decl._name == id_name:
-                if id_expr_type is None:
-                    id_expr_type = nodes.PrimaryType(decl._ctype._identifier)
-                else:
-                    raise KVisitorError("Multiple definition of Id for the same signature for '"+ id_name +"'")
+        root = self.get_root(id_expr)
+        while root is not None:
+            for decl in root.body:
+                if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
+                    continue
+                elif decl._name == id_name:
+                    if id_expr_type is None:
+                        id_expr_type = nodes.PrimaryType(decl._ctype._identifier)
+                    else:
+                        raise KVisitorError("Multiple definition of Id for the same signature for '"+ id_name +"'")
+            root = self.get_root(root)
                     
         # Check if a type has been found and set it
         if id_expr_type is None:
@@ -193,6 +196,8 @@ class Typing(VisitorRunner):
         
     def get_root(self, expr):
         """Get the root (BlockStmt) from the given expression by accessing the parents"""
+        if isinstance(expr, nodes.RootBlockStmt):
+            return None
         root = expr.parent()
         while isinstance(root, nodes.BlockStmt) is not True:
             root = root.parent()

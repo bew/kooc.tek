@@ -113,9 +113,10 @@ class TypingTest(unittest.TestCase):
                 void funcVoid();
             }
 
+            int foo = 42;
+
             int main()
             {
-                int foo = 42;
                 double bar = 42.42;
 
                 [Test funcInt :foo];
@@ -136,17 +137,17 @@ class TypingTest(unittest.TestCase):
             runner.run(ast)
             
         # Check funcInt
-        funcInt = ast.body[1].body.body[2].expr
+        funcInt = ast.body[2].body.body[1].expr
         self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
 
         # Check funcFloat
-        funcDouble = ast.body[1].body.body[3].expr
+        funcDouble = ast.body[2].body.body[2].expr
         self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
 
         # Check funcVoid
-        funcVoid = ast.body[1].body.body[4].expr
+        funcVoid = ast.body[2].body.body[3].expr
         self.assertEqual(funcVoid.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
 
 
@@ -601,6 +602,45 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
 
 
+    def test_Requiem(self):
+        """Resolve typing Requiem"""
+        source = """
+            @module Test
+            {
+                int foo = 42;
+                double bar = 42.42;
+
+                int funcInt(int var);
+                double funcDouble(double var);
+            }
+
+            int main()
+            {
+                [Test.foo] = [Test funcInt :42];
+                [Test.bar] = [Test funcDouble :42.42];
+            }
+        """
+
+
+        print("\n~~~~~~~~~~ test_Requiem ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+            
+        # # Check funcInt
+        # funcInt = ast.body[1].body.body[0].expr
+        # self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        # self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+
+        # # Check funcFloat
+        # funcDouble = ast.body[1].body.body[1].expr
+        # self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        # self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
         
 if __name__ == '__main__':
     unittest.main()
