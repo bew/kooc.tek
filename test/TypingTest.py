@@ -355,11 +355,13 @@ class TypingTest(unittest.TestCase):
         funcInt = ast.body[1].body.body[0].expr
         self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        self.assertEqual(funcInt.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param1 type
 
         # Check funcFloat
         funcDouble = ast.body[1].body.body[1].expr
         self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
             
 
     def test_param_Ternary(self):
@@ -435,13 +437,15 @@ class TypingTest(unittest.TestCase):
         funcInt = ast.body[1].body.body[0].expr
         self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        self.assertEqual(funcInt.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param1 type
 
         # Check funcFloat
         funcDouble = ast.body[1].body.body[1].expr
         self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
-
+        
     def test_param_Paren(self):
         """Resolve typing on param with Paren nodes"""
         source = """
@@ -515,11 +519,13 @@ class TypingTest(unittest.TestCase):
         funcInt = ast.body[1].body.body[0].expr
         self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        self.assertEqual(funcInt.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param1 type
 
         # Check funcFloat
         funcDouble = ast.body[1].body.body[1].expr
         self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
 
     def test_param_Unary(self):
@@ -595,34 +601,39 @@ class TypingTest(unittest.TestCase):
         funcInt = ast.body[1].body.body[0].expr
         self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        self.assertEqual(funcInt.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param1 type
 
         # Check funcFloat
         funcDouble = ast.body[1].body.body[1].expr
         self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
-
-    def test_Requiem(self):
-        """Resolve typing Requiem"""
+        
+    def test_param_Func(self):
+        """Resolve typing on param with Func node"""
         source = """
             @module Test
             {
-                int foo = 42;
-                double bar = 42.42;
-
-                int funcInt(int var);
-                double funcDouble(double var);
+                void func(int var);
+                void func(double var);
+                void func();
             }
+
+            int titi();
 
             int main()
             {
-                [Test.foo] = [Test funcInt :42];
-                [Test.bar] = [Test funcDouble :42.42];
+                double toto();
+
+                [Test func :titi()];
+                [Test func :toto()];
+                [Test func];
             }
         """
 
 
-        print("\n~~~~~~~~~~ test_Requiem ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_Param_Func ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -632,15 +643,64 @@ class TypingTest(unittest.TestCase):
             runner.register();
             runner.run(ast)
             
-        # # Check funcInt
-        # funcInt = ast.body[1].body.body[0].expr
-        # self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
-        # self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        # Check funcInt
+        funcInt = ast.body[2].body.body[1].expr
+        self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
 
-        # # Check funcFloat
-        # funcDouble = ast.body[1].body.body[1].expr
-        # self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
-        # self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        # Check funcFloat
+        funcDouble = ast.body[2].body.body[2].expr
+        self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+
+        # Check funcVoid
+        funcVoid = ast.body[2].body.body[3].expr
+        self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+
+
+    def test_params_Func(self):
+        """Resolve typing on params with Func nodes"""
+        source = """
+            @module Test
+            {
+                void func(int foo, double bar);
+                void func(double foo, int bar);
+            }
+
+            int titi();
+
+            int main()
+            {
+                double toto();
+
+                [Test func :titi() :toto()];
+                [Test func :toto() :titi()];
+            }
+        """
+
+
+        print("\n~~~~~~~~~~ test_Param_Func ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+            
+        # Check funcInt
+        funcInt = ast.body[2].body.body[1].expr
+        self.assertEqual(funcInt.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcInt.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param0 type
+        self.assertEqual(funcInt.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param1 type
+
+        # Check funcFloat
+        funcDouble = ast.body[2].body.body[2].expr
+        self.assertEqual(funcDouble.expr_type.__dict__, nodes.PrimaryType("void").__dict__) # Function return type
+        self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
+        self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
+
         
 if __name__ == '__main__':
     unittest.main()

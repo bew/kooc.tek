@@ -156,6 +156,35 @@ class Typing(VisitorRunner):
 
         return paren_unary_expr
 
+
+    def resolve_Func(self, func_expr):
+        """Resolve the typing for an Func node"""
+        if (self.is_typed(func_expr)):
+            return func_expr
+
+        func_expr_type = None
+        func_name = func_expr.call_expr.value
+
+        # Search among all declaration the func declaration by it's name
+        root = self.get_root(func_expr)
+        while root is not None:
+            for decl in root.body:
+                if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
+                    continue
+                elif decl._name == func_name:
+                    if func_expr_type is None:
+                        func_expr_type = nodes.PrimaryType(decl._ctype._identifier)
+                    else:
+                        raise KVisitorError("Multiple definition of Func for the same signature for '"+ func_name +"'")
+            root = self.get_root(root)
+                    
+        # Check if a type has been found and set it
+        if func_expr_type is None:
+            raise KVisitorError("Cant find any definition of Func '"+ func_name +"'")
+        else:
+            func_expr.expr_type = func_expr_type
+            
+        return func_expr
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
 
@@ -175,6 +204,8 @@ class Typing(VisitorRunner):
             return self.resolve_Ternary(expr)
         elif isinstance(expr, nodes.Paren) or isinstance(expr, nodes.Unary):
             return self.resolve_Paren_Unary(expr)
+        elif isinstance(expr, nodes.Func):
+            return self.resolve_Func(expr)
         elif type(expr) not in self.ignored_expression:
             raise KVisitorError("Unknow way to resolve expression: "+ expr.__class__.__name__)
 
