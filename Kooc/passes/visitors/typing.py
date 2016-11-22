@@ -9,16 +9,12 @@ from weakref import ref
 
 # TODO:
 #
-# where to handle multiple type:
-# kccall
-# binary
-# ternary
-#
 # missing:
 # func
 #
 # notes:
-# need to handle assignment
+# Add global scope for searching in id
+# Take care of multiple KcLookup with same signature
 class Typing(VisitorRunner):
 
     typed_literal = TypedLiteral()
@@ -40,8 +36,7 @@ class Typing(VisitorRunner):
             
     def resolve_KcCall(self, kccall_expr):
         """Resolve the typing for a KcCall node"""
-        # Check if the typing is already done
-        if hasattr(kccall_expr, "expr_type") is True and isinstance(kccall_expr.expr_type, list):
+        if (self.is_typed(kccall_expr)):
             return kccall_expr
         
         kccall_expr.params = self.resolve_params(kccall_expr.params)
@@ -52,28 +47,30 @@ class Typing(VisitorRunner):
         for decl in kccall_expr.context().body:
             if isinstance(decl, nodes.Decl) is not True or isinstance(decl._ctype, nodes.FuncType) is not True:
                 continue
-            elif decl._name == kccall_name and len(decl._ctype.params) == len(kccall_expr.params) and self.compare_params_type(kccall_expr.params, decl._ctype.params) is True:
+            elif decl._name == kccall_name and len(decl._ctype.params) == len(kccall_expr.params) and self.compare_params_type_KcCall(kccall_expr.params, decl._ctype.params) is True:
                 kccall_expr_type.append(nodes.PrimaryType(decl._ctype._identifier))
 
         # Check if at least a type has been found and set them
         if len(kccall_expr_type) <= 0:
-            raise KVisitorError("Cant find KcLookup '"+ kccall_name +"' for typing") # TODO : Precise the params as criteria for search
+            raise KVisitorError("Cant find any definition of KcCall '"+ kccall_name +"'") # TODO : Precise the params as criteria for search
         else:
-            kccall_expr.expr_type = kccall_expr_type
-            
+            if len(kccall_expr_type) == 1:
+                kccall_expr.expr_type = kccall_expr_type[0]
+            else:
+                kccall_expr.expr_type = kccall_expr_type
+                
         return kccall_expr
 
                     
     def resolve_KcLookup(self, kclookup_expr):
         """Resolve the typing for KcLookup node"""
-        # Check if the typing is already done
-        if hasattr(kclookup_expr, "expr_type") is True and isinstance(kclookup_expr.expr_type, list):
+        if (self.is_typed(kclookup_expr)):
             return kclookup_expr
 
         kclookup_expr_type = list()
         kclookup_name = kclookup_expr.member
         
-        # Search among the context the KcLookup declarations by it's name
+        # Search among the context the KcLookup declarations by it's name and add the expr_type found
         for decl in kclookup_expr.context().body:
             if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
                 continue
@@ -82,9 +79,12 @@ class Typing(VisitorRunner):
 
         # Check if at least a type has been found and set them
         if len(kclookup_expr_type) <= 0:
-            raise KVisitorError("Cant find KcLookup '"+ kclookup_name +"' for typing")
+            raise KVisitorError("Cant find any definition of KcLookup '"+ kclookup_name +"'")
         else:
-            kclookup_expr.expr_type = kclookup_expr_type
+            if len(kclookup_expr_type) == 1:
+                kclookup_expr.expr_type = kclookup_expr_type[0]
+            else:
+                kclookup_expr.expr_type = kclookup_expr_type
             
         return kclookup_expr
 
@@ -96,8 +96,7 @@ class Typing(VisitorRunner):
     
     def resolve_Id(self, id_expr):
         """Resolve the typing for an Id node"""
-        # Check if the typing is already done
-        if hasattr(id_expr, "expr_type") is True and isinstance(id_expr.expr_type, nodes.PrimaryType):
+        if (self.is_typed(id_expr)):
             return id_expr
 
         id_expr_type = None
@@ -111,11 +110,11 @@ class Typing(VisitorRunner):
                 if id_expr_type is None:
                     id_expr_type = nodes.PrimaryType(decl._ctype._identifier)
                 else:
-                    raise KVisitorError("Ambiguous Id '"+ id_name +"' for typing")
+                    raise KVisitorError("Multiple definition of Id for the same signature for '"+ id_name +"'")
                     
         # Check if a type has been found and set it
         if id_expr_type is None:
-            raise KVisitorError("Cant find Id '"+ id_name +"' for typing")
+            raise KVisitorError("Cant find any definition of Id '"+ id_name +"'")
         else:
             id_expr.expr_type = id_expr_type
             
@@ -124,60 +123,35 @@ class Typing(VisitorRunner):
 
     def resolve_Binary(self, binary_expr):
         """Resolve the typing for a Binary node"""
-        # Check if the typing is already done
-        if hasattr(binary_expr, "expr_type") is True and isinstance(binary_expr.expr_type, nodes.PrimaryType):
+        if (self.is_typed(binary_expr)):
             return binary_expr
         
         binary_expr.params = self.resolve_params(binary_expr.params)
-
-        # Check if the both operands are of the same type. TODO : Handle in case of multiple types
-        if binary_expr.params[0].expr_type.__dict__ != binary_expr.params[1].expr_type.__dict__:
-            raise KVisitorError("The params of the binary node don't have the same type")
-        else:
-            binary_expr.expr_type = binary_expr.params[0].expr_type
+        binary_expr.expr_type = self.get_matches_expr_type(binary_expr.params[0].expr_type, binary_expr.params[1].expr_type)
             
         return binary_expr
 
     
     def resolve_Ternary(self, ternary_expr):
         """Resolve the typing for a Ternary node"""
-        # Check if the typing is already done
-        if hasattr(ternary_expr, "expr_type") is True and isinstance(ternary_expr.expr_type, nodes.PrimaryType):
+        if (self.is_typed(ternary_expr)):
             return ternary_expr
 
         ternary_expr.params = self.resolve_params(ternary_expr.params)
-
-        # Check if the both operands are of the same type. TODO : Handle in case of multiple types
-        if ternary_expr.params[1].expr_type.__dict__ != ternary_expr.params[2].expr_type.__dict__:
-            raise KVisitorError("The params of the ternary node don't have the same type")
-        else:
-            ternary_expr.expr_type = ternary_expr.params[1].expr_type
+        ternary_expr.expr_type = self.get_matches_expr_type(ternary_expr.params[1].expr_type, ternary_expr.params[2].expr_type)
 
         return ternary_expr
 
     
-    def resolve_Paren(self, paren_expr):
-        """Resolve the typing for a Paren node"""
-        # Check if the typing is already done
-        if hasattr(paren_expr, "expr_type") is True and isinstance(paren_expr.expr_type, nodes.PrimaryType):
-            return paren_expr
+    def resolve_Paren_Unary(self, paren_unary_expr):
+        """Resolve the typing for a Paren or a Unary node"""
+        if (self.is_typed(paren_unary_expr)):
+            return paren_unary_expr
 
-        paren_expr.params = self.resolve_params(paren_expr.params)
-        paren_expr.expr_type = paren_expr.params[0].expr_type
+        paren_unary_expr.params = self.resolve_params(paren_unary_expr.params)
+        paren_unary_expr.expr_type = paren_unary_expr.params[0].expr_type
 
-        return paren_expr
-
-
-    def resolve_Unary(self, unary_expr):
-        """Resolve the typing for a Unary node"""
-        # Check if the typing is already done
-        if hasattr(unary_expr, "expr_type") is True and isinstance(unary_expr.expr_type, nodes.PrimaryType):
-            return unary_expr
-        
-        unary_expr.params = self.resolve_params(unary_expr.params)
-        unary_expr.expr_type = unary_expr.params[0].expr_type
-            
-        return unary_expr
+        return paren_unary_expr
 
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
@@ -196,12 +170,25 @@ class Typing(VisitorRunner):
             return self.resolve_Binary(expr)
         elif isinstance(expr, nodes.Ternary):
             return self.resolve_Ternary(expr)
-        elif isinstance(expr, nodes.Paren):
-            return self.resolve_Paren(expr)
-        elif isinstance(expr, nodes.Unary):
-            return self.resolve_Unary(expr)
+        elif isinstance(expr, nodes.Paren) or isinstance(expr, nodes.Unary):
+            return self.resolve_Paren_Unary(expr)
         elif type(expr) not in self.ignored_expression:
             raise KVisitorError("Unknow way to resolve expression: "+ expr.__class__.__name__)
+
+
+    def is_typed(self, expr):
+        """Check if the typing is already done"""
+        if hasattr(expr, "expr_type") is True and isinstance(expr.expr_type, nodes.PrimaryType):
+            return True
+        else:
+            return False
+
+        
+    def resolve_params(self, params):
+        """Resolve the types of the params"""
+        for key, param in enumerate(params):
+            params[key] = self.choose_resolve_method(param)
+        return params
 
         
     def get_root(self, expr):
@@ -212,21 +199,21 @@ class Typing(VisitorRunner):
         return root
 
 
-    def compare_params_type(self, kccall_params, decl_params):
-        """Compare if the params are the same types on the two given list of params"""
-        is_equal = True
+    def compare_params_type_KcCall(self, kccall_params, decl_params):
+        """Compare if the params are the same between a KcCall and a Decl"""
         for key, decl_param in enumerate(decl_params):
-            kccall_param_expr_type = kccall_params[key].expr_type[0] if isinstance(kccall_params[key].expr_type, list) else kccall_params[key].expr_type # TODO : Fixme :( => Invariance
-            if kccall_param_expr_type._identifier != decl_param._ctype._identifier:
+            kccall_param_expr_type = kccall_params[key].expr_type
+            if isinstance(kccall_param_expr_type, list) is not True:
+                if kccall_param_expr_type.__dict__ != decl_param._ctype.__dict__:
+                    return False
+            else:
                 is_equal = False
-        return is_equal
-            
-    
-    def resolve_params(self, params):
-        """Resolve the types of the params"""
-        for key, param in enumerate(params):
-            params[key] = self.choose_resolve_method(param)
-        return params
+                for kcall_param_sub_expr_type in kccall_param_expr_type:
+                    if kcall_param_sub_expr_type.__dict == decl_param._ctype.__dict__:
+                        is_equal = True
+                if is_equal is False:
+                    return False
+        return True
 
 
     def check_and_apply(self):
@@ -249,7 +236,54 @@ class Typing(VisitorRunner):
         return expr
 
 
+    def get_matches_expr_type_lists(self, first_expr_type_list, second_expr_type_list):
+        """Get the matches expression_type between two list of expression_type"""
+        expr_type = list()
+        for sub_first_expr_type in first_expr_type_list:
+            for sub_second_expr_type in second_expr_type_list:
+                if sub_first_expr_type.__dict__ == sub_second_expr_type.__dict__:
+                    expr_type.append(sub_first_expr_type)
+                    
+        if len(expr_type) <= 0:
+            raise KVisitorError("The both expr_type don't have any match")
+        else:
+            if len(expr_type) == 1:
+                return expr_type[0]
+            else:
+                return expr_type
 
+            
+    def get_matches_expr_type_list(self, first_expr_type, second_expr_type_list):
+        """Get the matches expression_type between an expression_type and a list of expression_type"""
+        expr_type = None
+        for sub_second_expr_type in second_expr_type_list:
+            if first_expr_type.__dict__ == sub_second_expr_type.__dict__:
+                if expr_type is not None:
+                    raise KVisitorError("Multiple type is not authorized")
+                else:
+                    expr_type = first_expr_type
+                    
+        if expr_type is None:
+            raise KVisitorError("The both expr_type don't have any match")
+        else:
+            return expr_type
+
+        
+    def get_matches_expr_type(self, first_expr_type, second_expr_type):
+        """Get the matches expression_type between two expression_type (can be list)"""
+        if isinstance(first_expr_type, list) is True and isinstance(second_expr_type, list) is True:
+            return self.get_matches_expr_type_lists(first_expr_type, second_expr_type)
+        elif isinstance(first_expr_type, list) is True:
+            return self.get_matches_expr_type_list(second_expr_type, first_expr_type)
+        elif isinstance(second_expr_type, list) is True:
+            return self.get_matches_expr_type_list(first_expr_type, second_expr_type)
+        else:
+            if first_expr_type.__dict__ != second_expr_type.__dict__:
+                raise KVisitorError("The both expr_type don't have any match")
+            else:
+                return first_expr_type
+
+            
     # ~~~~~~~~~~ Shit of Lesell ~~~~~~~~~~
     
     def resolve_expr_context(self):
