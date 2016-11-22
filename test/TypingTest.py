@@ -701,6 +701,39 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDouble.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__) # Function param0 type
         self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
+
+    def test_toto(self):
+        """Resolve typing on params with Func nodes"""
+        source = """
+            @module Test
+            {
+                int foo;
+                double foo;
+                char foo;
+
+                double bar;
+
+                int func(int foo);
+                double func(int foo);
+            }
+
+            int main()
+            {
+                @!(int)[Test.foo] = [Test func :42];
+            }
+        """
+
+
+        print("\n~~~~~~~~~~ test_toto ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+
         
 if __name__ == '__main__':
     unittest.main()

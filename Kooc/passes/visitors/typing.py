@@ -9,12 +9,8 @@ from weakref import ref
 
 # TODO:
 #
-# missing:
-# func
-#
-# notes:
-# Add global scope for searching in id
 # Take care of multiple KcLookup with same signature
+# Invariance for KcCall and func
 class Typing(VisitorRunner):
 
     typed_literal = TypedLiteral()
@@ -64,9 +60,9 @@ class Typing(VisitorRunner):
                     
     def resolve_KcLookup(self, kclookup_expr):
         """Resolve the typing for KcLookup node"""
-        if (self.is_typed(kclookup_expr)):
+        if self.is_typed(kclookup_expr) is True:
             return kclookup_expr
-
+        
         kclookup_expr_type = list()
         kclookup_name = kclookup_expr.member
         
@@ -128,9 +124,12 @@ class Typing(VisitorRunner):
         """Resolve the typing for a Binary node"""
         if (self.is_typed(binary_expr)):
             return binary_expr
-        
+
         binary_expr.params = self.resolve_params(binary_expr.params)
         binary_expr.expr_type = self.get_matches_expr_type(binary_expr.params[0].expr_type, binary_expr.params[1].expr_type)
+
+        if isinstance(binary_expr.expr_type, list) is not True:
+            binary_expr = self.set(binary_expr, binary_expr.expr_type)
             
         return binary_expr
 
@@ -143,6 +142,9 @@ class Typing(VisitorRunner):
         ternary_expr.params = self.resolve_params(ternary_expr.params)
         ternary_expr.expr_type = self.get_matches_expr_type(ternary_expr.params[1].expr_type, ternary_expr.params[2].expr_type)
 
+        if isinstance(ternary_expr.expr_type, list) is not True:
+            ternary_expr = self.set(ternary_expr, ternary_expr.expr_type)
+
         return ternary_expr
 
     
@@ -153,6 +155,9 @@ class Typing(VisitorRunner):
 
         paren_unary_expr.params = self.resolve_params(paren_unary_expr.params)
         paren_unary_expr.expr_type = paren_unary_expr.params[0].expr_type
+
+        if isinstance(paren_unary_expr.expr_type, list) is not True:
+            paren_unary_expr = self.set(paren_unary_expr, paren_unary_expr.expr_type)
 
         return paren_unary_expr
 
@@ -185,6 +190,56 @@ class Typing(VisitorRunner):
             func_expr.expr_type = func_expr_type
             
         return func_expr
+
+
+    def set(self, expr, expr_type):
+        """Choose the way to set the typing by type of node"""
+        if isinstance(expr, knodes.KcCall):
+            return self.set_KcCall(expr, expr_type)
+        elif isinstance(expr, knodes.KcLookup):
+            return self.set_KcLookup(expr, expr_type)
+        elif isinstance(expr, nodes.Binary):
+            return self.set_Binary(expr, expr_type)
+        elif isinstance(expr, nodes.Ternary):
+            return self.set_Ternary(expr, expr_type)
+        elif isinstance(expr, nodes.Paren) or isinstance(expr, nodes.Unary):
+            return self.set_Paren_Unary(expr, expr_type)
+        elif isinstance(expr, nodes.Func):
+            return self.set_Func(expr, expr_type)
+        else:
+            return expr
+
+    def set_KcCall(self, kccall_expr, expr_type):
+        kccall_expr.expr_type = expr_type
+        for key, param in enumerate(kccall_expr.params):
+            kccall_expr.params[key].expr_type = expr_type
+        return kccall_expr
+
+    
+    def set_KcLookup(self, kclookup_expr, expr_type):
+        kclookup_expr.expr_type = expr_type
+        return kclookup_expr
+
+    
+    def set_Binary(self, binary_expr, expr_type):
+        binary_expr.expr_type = expr_type
+        binary_expr.params[0] = self.set(binary_expr.params[0], expr_type)
+        binary_expr.params[1] = self.set(binary_expr.params[1], expr_type)
+        return binary_expr
+
+    
+    def set_Ternary(self, ternary_expr, expr_type):
+        ternary_expr.expr_type = expr_type
+        ternary_expr.params[1] = self.set(ternary_expr.params[1], expr_type)
+        ternary_expr.params[2] = self.set(ternary_expr.params[2], expr_type)
+        return ternary_expr
+
+    
+    def set_Paren_Unary(self, paren_unary_expr, expr_type):
+        paren_unary_expr.expr_type = expr_type
+        paren_unary_expr.params[0] = self.set(paren_unary_expr.params[0], expr_type)
+        return paren_unary_expr
+
     
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
 
@@ -245,7 +300,7 @@ class Typing(VisitorRunner):
             else:
                 is_equal = False
                 for kcall_param_sub_expr_type in kccall_param_expr_type:
-                    if kcall_param_sub_expr_type.__dict == decl_param._ctype.__dict__:
+                    if kcall_param_sub_expr_type.__dict__ == decl_param._ctype.__dict__:
                         is_equal = True
                 if is_equal is False:
                     return False
