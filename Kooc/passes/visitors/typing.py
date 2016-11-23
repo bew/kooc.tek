@@ -55,6 +55,9 @@ class Typing(VisitorRunner):
             else:
                 kccall_expr.expr_type = kccall_expr_type
 
+        if isinstance(kccall_expr.expr_type, list) is not True:
+            kccall_expr = self.set(kccall_expr, kccall_expr.expr_type)
+
         return kccall_expr
 
 
@@ -189,6 +192,9 @@ class Typing(VisitorRunner):
         else:
             func_expr.expr_type = func_expr_type
 
+        if isinstance(func_expr.expr_type, list) is not True:
+            func_expr = self.set(func_expr, func_expr.expr_type)
+            
         return func_expr
 
 
@@ -209,10 +215,22 @@ class Typing(VisitorRunner):
         else:
             return expr
 
+
     def set_KcCall(self, kccall_expr, expr_type):
         kccall_expr.expr_type = expr_type
-        for key, param in enumerate(kccall_expr.params):
-            kccall_expr.params[key].expr_type = expr_type
+        already_typed = False
+        
+        for decl in kccall_expr.context().body:
+            if isinstance(decl, nodes.Decl) is not True or isinstance(decl._ctype, nodes.FuncType) is not True:
+                continue
+            elif decl._name == kccall_expr.function and len(decl._ctype.params) == len(kccall_expr.params) and decl._ctype._identifier == kccall_expr.expr_type._identifier and self.compare_params_type_KcCall(kccall_expr.params, decl._ctype.params) is True:
+                if already_typed is False:
+                    already_typed = True
+                    for key, param in enumerate(kccall_expr.params):
+                        kccall_expr.params[key] = self.set(param, decl._ctype._params[key]._ctype)
+                else:
+                    raise KVisitorError("Multiple type spotted !!")
+                        
         return kccall_expr
 
 
@@ -240,6 +258,23 @@ class Typing(VisitorRunner):
         paren_unary_expr.params[0] = self.set(paren_unary_expr.params[0], expr_type)
         return paren_unary_expr
 
+
+    def set_Func(self, func_expr, expr_type):
+        func_name = func_expr.call_expr.value
+
+        root = self.get_root(func_expr)
+        while root is not None:
+            for decl in root.body:
+                if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
+                    continue
+                elif decl._name == func_name and func_expr.expr_type._identifier == decl._ctype._identifier:
+                    for key, param in enumerate(func_expr.params):
+                        func_expr.params[key] = self.set(param, decl._ctype._params[key]._ctype)
+                    break
+            root = self.get_root(root)
+
+
+        return func_expr
 
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
 
@@ -392,8 +427,7 @@ class Typing(VisitorRunner):
             elif not isinstance(ctx, nodes.Expr):
                 raise KVisitorError('KcExpr context is not a str or expr: {}'.format(ctx))
 
-            # TODO: handle primary_expression as context
-
+            
     def type_c_cast(self):
         for expr in self.ast.yield_expr():
             if not isinstance(expr, nodes.Cast):

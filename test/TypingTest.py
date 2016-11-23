@@ -702,16 +702,16 @@ class TypingTest(unittest.TestCase):
         self.assertEqual(funcDouble.params[1].expr_type.__dict__, nodes.PrimaryType("int").__dict__) # Function param1 type
 
 
-    def test_toto(self):
-        """Resolve typing on params with Func nodes"""
+    def test_custom1(self):
+        """Resolve typing on params with differents node"""
         source = """
             @module Test
             {
                 int foo;
-                double foo;
                 char foo;
 
                 double bar;
+                float bar;
 
                 int func(int foo);
                 double func(int foo);
@@ -719,12 +719,12 @@ class TypingTest(unittest.TestCase):
 
             int main()
             {
-                @!(int)[Test.foo] = [Test func :42];
+                [Test.bar] = [Test func :[Test func :[Test.foo]]];
             }
         """
 
 
-        print("\n~~~~~~~~~~ test_toto ~~~~~~~~~~\n")
+        print("\n~~~~~~~~~~ test_custom1 ~~~~~~~~~~\n")
         ast = self.parser.parse(source)
         runners = [
             visitors.linkchecks.LinkChecks(),
@@ -733,6 +733,44 @@ class TypingTest(unittest.TestCase):
         for runner in runners:
             runner.register();
             runner.run(ast)
+            
+        binary = ast.body[1].body.body[0].expr
+        self.assertEqual(binary.params[0].expr_type.__dict__, nodes.PrimaryType("double").__dict__)
+        self.assertEqual(binary.params[1].expr_type.__dict__, nodes.PrimaryType("double").__dict__)
+
+
+    def test_custom2(self):
+        """Resolve typing on params with differents node"""
+        source = """
+            @module Test
+            {
+                int foo;
+                char foo;
+
+                double bar;
+
+                int func(int foo);
+                double func(double foo);
+            }
+
+            int main()
+            {
+                int a = [Test func :[Test.foo]];
+            }
+        """
+
+        print("\n~~~~~~~~~~ test_custom2 ~~~~~~~~~~\n")
+        ast = self.parser.parse(source)
+        runners = [
+            visitors.linkchecks.LinkChecks(),
+            visitors.typing.Typing()
+            ]
+        for runner in runners:
+            runner.register();
+            runner.run(ast)
+
+        self.assertEqual(ast.body[1].body.body[0]._assign_expr.params[0].expr_type.__dict__, nodes.PrimaryType("int").__dict__)
+        self.assertEqual(ast.body[1].body.body[0]._assign_expr.expr_type.__dict__, nodes.PrimaryType("int").__dict__)
 
         
 if __name__ == '__main__':
