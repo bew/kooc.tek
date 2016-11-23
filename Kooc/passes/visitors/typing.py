@@ -116,7 +116,27 @@ class Typing(VisitorRunner):
 
         # Check if a type has been found and set it
         if id_expr_type is None:
-            raise KVisitorError("Cant find any definition of Id '"+ id_name +"'")
+            # we are in a function ? search in func params
+            root = self.get_root(id_expr)
+            while root is not None:
+                if hasattr(root, 'parent') and root.parent():
+                    parent = root.parent()
+                    if hasattr(parent, '_ctype') and isinstance(parent._ctype, nodes.FuncType):
+                        params = parent._ctype.params
+                        for decl in params:
+                            if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
+                                continue
+                            elif decl._name == id_name:
+                                id_expr_type = nodes.PrimaryType(decl._ctype._identifier)
+
+
+                root = self.get_root(root)
+
+            if id_expr_type is None:
+                raise KVisitorError("Cant find any definition of Id '"+ id_name +"'")
+            else:
+                id_expr.expr_type = id_expr_type
+
         else:
             id_expr.expr_type = id_expr_type
 
@@ -419,6 +439,7 @@ class Typing(VisitorRunner):
 
             ctx = expr.context
             if isinstance(ctx, str):
+                ctx = ctx.strip()
                 if ctx in self.ast.ktypes:
                     expr.context = self.ast.ktypes[ctx]
                     continue

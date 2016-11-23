@@ -9,11 +9,13 @@
 {
   int get_var_and_add(int addit)
   {
-    return @!(int)[OneFileModule.var] + addit;
+    return [OneFileModule.var] + addit;
   }
 }
 
 int main()
 {
-  return @!(int)[OneFileModule get_var_and_add :(int)2];
+  return [OneFileModule get_var_and_add :2];
 }
+
+// vim:set ft=c:

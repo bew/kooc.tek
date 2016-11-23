@@ -19,21 +19,21 @@ parser.add_argument(
     action='store_true'
 )
 
-parser.add_argument(
-    '-v',
-    '--verbose',
-    dest='verbose',
-    help='Enable verbose output',
-    action='store_true'
-)
-
-parser.add_argument(
-    '-d',
-    '--debug',
-    dest='debug',
-    help='Enable debug (enable verbose too)',
-    action='store_true'
-)
+#parser.add_argument(
+#    '-v',
+#    '--verbose',
+#    dest='verbose',
+#    help='Enable verbose output',
+#    action='store_true'
+#)
+#
+#parser.add_argument(
+#    '-d',
+#    '--debug',
+#    dest='debug',
+#    help='Enable debug (enable verbose too)',
+#    action='store_true'
+#)
 
 parser.add_argument(
     '-f',
@@ -66,10 +66,10 @@ from Kooc.chief import ChiefKooc, KLoadingError
 chief = ChiefKooc(just_parse = args.just_parse, write_c = not args.no_c)
 
 # TODO: setup logging
-if args.verbose:
-    chief.verbose = True
-if args.debug:
-    chief.debug = True
+#if args.verbose:
+#    chief.verbose = True
+#if args.debug:
+#    chief.debug = True
 
 try:
     chief.load_files(args.filenames)

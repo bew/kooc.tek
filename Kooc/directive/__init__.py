@@ -275,9 +275,6 @@ def kc_add_typename(self, current_block, name_node):
 def kc_is_typename(self, id_node, current_block):
     id = self.value(id_node)
 
-    print('in expr, id:', id)
-    print('id is in types (', current_block.ref.types, ') ?', id in current_block.ref.types)
-
     return id in current_block.ref.types
 
 

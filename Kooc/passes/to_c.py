@@ -124,9 +124,6 @@ def get_types(ast):
 def to_c(self):
     ctx = self.context() # self.context is a weakref
 
-    if isinstance(ctx, knodes.KcClass):
-        pass # FIXME: need ?
-
     if isinstance(ctx, knodes.KcModule):
         # fetch all params types
         params_types = []
@@ -182,15 +179,8 @@ def to_c(self):
 
     klass = self.bind_mc()
 
-    print('klass for ' + klass.name + 'implem:', klass.to_yml())
-
     implem_lsdata.append(klass.structs['vtable'].to_c())
     implem_lsdata.append(klass.structs['metadata'].to_c())
     implem_lsdata.append('// end of class ' + self.name + ' implem\n')
     return fmt.sep('\n', implem_lsdata)
-
-# Helper functions
-#--------------------------------
-
-# ?
 
