@@ -1,3 +1,4 @@
+#include <stdio.h>
 @import "basic_test.kh"
 
 @implementation MyModule

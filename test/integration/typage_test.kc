@@ -1,3 +1,4 @@
+#include <stdio.h>
 @import "typage_test.kh"
 
 @implementation MyModule

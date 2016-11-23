@@ -3,6 +3,7 @@
 
 from subprocess import Popen, PIPE
 from tempfile import NamedTemporaryFile
+from os import unlink
 
 class KoocTestEntry:
     tests = []
@@ -26,23 +27,23 @@ class KoocTestEntry:
         KoocTestEntry.tests.append(self)
 
     def run(self, koocBin, ccBin):
-        koocRes = Popen([koocBin, self.kcFileName], stdout=PIPE, stderr=PIPE)
+        koocRes = Popen(koocBin + " " + self.kcFileName + ".kc" + " " + self.kcFileName + ".kh", stdout=PIPE, stderr=PIPE, shell = True)
         self.koocOutput = koocRes.communicate()
         self.koocRet = koocRes.returncode
-        cFile = NamedTemporaryFile()
-        cFile.write(self.koocOutput[0])        
-        ccRes = Popen([ccBin, cFile.name], stdout=PIPE, stderr=PIPE)
+        ccRes = Popen(ccBin + " " + self.kcFileName + ".c" , stdout=PIPE, stderr=PIPE, shell=True)
         self.ccOutput = ccRes.communicate()
         self.ccRet = ccRes.returncode
         res = None
         if self.input != None:
-            res = Popen(["echo \"" + self.input + "\"" + " | ./a.out"], stdout=PIPE, stderr=PIPE, shell = True)
+            res = Popen("echo \"" + self.input + "\"" + " | ./a.out", stdout=PIPE, stderr=PIPE, shell = True)
         else:
-            res = Popen(["./a.out"], stdout=PIPE, stderr=PIPE, shell = True)    
+            res = Popen("./a.out", stdout=PIPE, stderr=PIPE, shell = True)    
         self.output = res.communicate()
         self.ret = res.returncode
-
-        cFile.close()
+        try:
+            unlink("./a.out")
+        except:
+            pass
         pass
 
     @staticmethod
@@ -98,7 +99,7 @@ class KoocTestEntry:
             ))
 
     def assert_output(self):
-        if self.output[0] != self.expectedOutput:
+        if self.output[0] != self.expectedOutput.strip('\n'):
             print("{result} {name}: output does not match\n\"{expect}\"!=\"{cause}\"".format(
                 result = KoocTestEntry.failString,
                 name = self.testName,
@@ -106,6 +107,6 @@ class KoocTestEntry:
                 expect = self.expectedOutput
             ))
 
-KoocTestEntry("basic", "basic_test.kc", None, "hello wolrd !")
-KoocTestEntry("type", "typage_test.kc", None, "42 0.1337 42.1337");
+KoocTestEntry("basic", "basic_test", None, "hello world !")
+#KoocTestEntry("type", "typage_test", None, "42 0.1337 42.1337");
 KoocTestEntry.runAll("../../koocexe", "cc")
