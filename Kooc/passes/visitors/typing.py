@@ -14,7 +14,7 @@ from weakref import ref
 class Typing(VisitorRunner):
 
     typed_literal = TypedLiteral()
-    ignored_expression = [nodes.Raw]
+    ignored_expression = [nodes.Raw, nodes.PrimaryType]
 
     def register(self):
         """Register all the visitors for the runner"""
