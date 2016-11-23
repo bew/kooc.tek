@@ -18,10 +18,10 @@ class Typing(VisitorRunner):
 
     def register(self):
         """Register all the visitors for the runner"""
+        self.register_visitor(self.resolve_expr_context)
         self.register_visitor(self.type_c_cast)
         self.register_visitor(self.resolve)
         self.register_visitor(self.check_and_apply)
-        self.register_visitor(self.resolve_expr_context)
 
 
     def resolve(self):
