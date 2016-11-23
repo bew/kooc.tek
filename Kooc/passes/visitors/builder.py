@@ -85,10 +85,6 @@ class ClassBuilder(VisitorRunner):
         self.register_visitor(self.build_class_structs)
 
     #--------------------------------
-    def add_ktype_object(self):
-        """Add Object base class to ktypes"""
-
-    #--------------------------------
     def methods_add_self(self):
         """add 'self' param to methods & virtuals functions"""
 
@@ -251,6 +247,7 @@ class ClassBuilder(VisitorRunner):
 
         vtable_struct_ctype = nodes.ComposedType('kc_' + klass.name + '_vtable')
         vtable_struct_ctype._specifier = nodes.Specifiers.STRUCT
+        vtable_struct_ctype._attr_composed = ['__attribute__((packed))']
         vtable_struct_ctype.fields = []
 
         # add virtuals from class's parents
@@ -270,6 +267,7 @@ class ClassBuilder(VisitorRunner):
 
         struct_ctype = nodes.ComposedType('kc_' + klass.name + '_metadata')
         struct_ctype._specifier = nodes.Specifiers.STRUCT
+        struct_ctype._attr_composed = ['__attribute__((packed))']
         struct_ctype.fields = []
 
         # class name
@@ -304,6 +302,7 @@ class ClassBuilder(VisitorRunner):
 
         instance_struct_ctype = nodes.ComposedType('kc_' + klass.name + '_instance')
         instance_struct_ctype._specifier = nodes.Specifiers.STRUCT
+        instance_struct_ctype._attr_composed = ['__attribute__((packed))']
         instance_struct_ctype.fields = []
 
         # assemble struct fields (instance member variables)
@@ -322,6 +321,7 @@ class ClassBuilder(VisitorRunner):
 
         interface_struct_ctype = nodes.ComposedType('kc_' + klass.name + '_interface')
         interface_struct_ctype._specifier = nodes.Specifiers.STRUCT
+        interface_struct_ctype._attr_composed = ['__attribute__((packed))']
         interface_struct_ctype.fields = []
 
         # meta field
