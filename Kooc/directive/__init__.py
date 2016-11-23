@@ -129,11 +129,10 @@ class Directive(Grammar, Declaration):
         kc_class_block = [
             '{'
                 __scope__ :current_block #new_blockstmt(_, current_block)
-                #kc_init_class_block(_)
                 [
                     Declaration.declaration #kc_check_member_func(class_name, current_block)
-                    | kc_at_member #kc_add_member(class_name, current_block)
-                    | kc_at_virtual #kc_add_virtual(class_name, current_block)
+                    | kc_at_member #kc_add_member(current_block)
+                    | kc_at_virtual #kc_add_virtual(current_block)
                 ]*
             '}'
         ]
@@ -256,12 +255,6 @@ def kc_new_implementation(self, current_block, name_node, implem_block):
 #--------------------------------
 
 @meta.hook(Directive)
-def kc_init_class_block(self, ast):
-    setattr(ast, "members", [])
-    setattr(ast, "virtuals", [])
-    return True
-
-@meta.hook(Directive)
 def kc_add_typename(self, current_block, name_node):
     typename = self.value(name_node)
 
@@ -286,57 +279,33 @@ def kc_add_class(self, current_block, name_node, inheritance_list, class_block):
         parents = inheritance_list.parents
 
     class_name = self.value(name_node)
+    ktypes = current_block.ref.ktypes
+
+    if class_name in ktypes:
+        raise KParsingError("Class re-opening not supported")
+
     knodes.KcClass.init_from_blockstmt(class_block, class_name)
     klass = class_block
-
-    ktypes = current_block.ref.ktypes
-    if class_name in ktypes:
-        # handle class re-opening ?
-        # => check inheritance_list equality
-        # or
-        # => check that the re-opening does not mention an inheritance_list
-        # or
-        # => just don't care, and add the new inheritance_list to the existing one (if any) ?
-        raise KParsingError("Class re-opening not handled")
 
     # add parents
     for parent_name in parents:
         if parent_name not in ktypes:
             raise KParsingError("Unknown class parent type '%s'" % parent_name)
-        parent = ktypes[parent_name]()
-        klass.add_parent(parent)
+
+        klass.parents.append(parent_name)
 
     ktypes[class_name] = ref(klass)
     current_block.ref.body.append(klass)
-    current_block.ref.types[class_name] = ref(klass)
-    return True
 
-@meta.hook(Directive)
-def kc_add_member(self, name_node, current_block):
-    last_decl = current_block.ref.body.pop()
-    class_name = self.value(name_node)
+    # C type for class:
+    # ==== typedef kc_{class}_interface {class}; ====
 
-    def func_add_param_self(func):
-        instance_type = nodes.PrimaryType(class_name)
-        instance_type.push(nodes.PointerType())
+    class_interface_struct_ctype = nodes.ComposedType('kc_' + class_name + '_interface')
+    class_interface_struct_ctype._specifier = nodes.Specifiers.STRUCT
+    class_interface_struct_ctype._storage = nodes.Storages.TYPEDEF
+    klass.typedef = nodes.Decl(class_name, class_interface_struct_ctype)
 
-        self_param = nodes.Decl('self', instance_type)
-        func._params.insert(0, self_param)
-
-    if isinstance(last_decl, nodes.Decl):
-        if isinstance(last_decl._ctype, nodes.FuncType):
-            func_add_param_self(last_decl._ctype)
-        current_block.ref.members.append(last_decl)
-        return True
-
-    if not isinstance(last_decl, nodes.BlockStmt):
-        return False
-
-    for decl in last_decl.body:
-        if isinstance(decl._ctype, nodes.FuncType):
-            func_add_param_self(decl._ctype)
-        current_block.ref.members.append(decl)
-
+    current_block.ref.types[class_name] = ref(klass.typedef)
     return True
 
 @meta.hook(Directive)
@@ -373,17 +342,67 @@ def kc_check_member_func(self, class_name_node, current_block):
         # is pointer on current class ?
         return first_ctype._identifier == class_name
 
-    last_decl = current_block.ref.body.pop()
+    last_decl = current_block.ref.body[-1]
     if is_member_func(last_decl):
-        current_block.ref.members.append(last_decl)
-    else:
-        current_block.ref.body.append(last_decl)
+        last_decl.__class__ = knodes.KcMethodDecl
 
     return True
 
 @meta.hook(Directive)
-def kc_add_virtual(self, name_node, current_block):
-    return True
+def kc_add_member(self, current_block):
+    last_decl = current_block.ref.body[-1]
+
+    def setup_member(decl):
+        if isinstance(decl._ctype, nodes.FuncType):
+            decl.__class__ = knodes.KcMethodDecl
+        else:
+            decl.__class__ = knodes.KcMemberDecl
+
+    if isinstance(last_decl, nodes.Decl):
+        setup_member(last_decl)
+        return True
+
+    if isinstance(last_decl, nodes.BlockStmt):
+        # remove block from body
+        current_block.ref.body.pop()
+
+        for decl in last_decl.body:
+            setup_member(decl)
+
+            # append each decl in body
+            current_block.ref.body.append(decl)
+
+        return True
+
+    return False
+
+@meta.hook(Directive)
+def kc_add_virtual(self, current_block):
+    last_decl = current_block.ref.body[-1]
+
+    def setup_virtual(decl):
+        if isinstance(decl._ctype, nodes.FuncType):
+            decl.__class__ = knodes.KcVirtualDecl
+        else:
+            raise KParsingError('Cannot make a variable declaration virtual')
+
+    if isinstance(last_decl, nodes.Decl):
+        setup_virtual(last_decl)
+        return True
+
+    if isinstance(last_decl, nodes.BlockStmt):
+        # remove block from body
+        current_block.ref.body.pop()
+
+        for decl in last_decl.body:
+            setup_virtual(decl)
+
+            # append each decl in body
+            current_block.ref.body.append(decl)
+
+        return True
+
+    return False
 
 # Misc hooks
 #--------------------------------

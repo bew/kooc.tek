@@ -6,6 +6,8 @@ from cnorm import nodes
 
 from . import KVisitorError, VisitorRunner
 
+from .builder import ClassBuilder
+
 class LinkChecks(VisitorRunner):
     """Import, Link, Checks Kooc nodes"""
 
@@ -55,6 +57,10 @@ class LinkChecks(VisitorRunner):
             sub_linkchecks.register()
             sub_linkchecks.run(sub_ast)
 
+            sub_class_builder = ClassBuilder()
+            sub_class_builder.register()
+            sub_class_builder.run(sub_ast)
+
             # merge sub_ast informations
 
             # merge kooc types
@@ -73,14 +79,20 @@ class LinkChecks(VisitorRunner):
     def bind_implem(self):
         """Bind each implementation to corresponding module/class"""
 
-        for tl in self.ast.body:
-            if not isinstance(tl, knodes.KcImplementation):
+        for implem in self.ast.body:
+            if not isinstance(implem, knodes.KcImplementation):
                 continue
 
             # find corresponding type (module/class)
-            if tl.name in self.ast.ktypes:
-                # bind implem to kooc type
-                tl.bind_mc = self.ast.ktypes[tl.name]
+            if implem.name in self.ast.ktypes:
+
+                # bind implem to module/class
+                implem.bind_mc = self.ast.ktypes[implem.name]
+                if isinstance(implem.bind_mc(), knodes.KcClass):
+                    implem.__class__ = knodes.KcClassImplementation
+                elif isinstance(implem.bind_mc(), knodes.KcModule):
+                    implem.__class__ = knodes.KcModuleImplementation
+
             else:
                 raise KVisitorError('Cannot find KType "{}", available KTypes: {}'.format(tl.name, self.ast.ktypes.keys()))
 
@@ -92,6 +104,12 @@ class LinkChecks(VisitorRunner):
             if not isinstance(tl, knodes.KcModule):
                 continue
 
-            # should not have same variable with & without constness
-            # should not have a static || inline function Decl
+            for decl in tl:
+                # TODO: module declarations should not have same variable with & without constness
+
+                # should not have a static || inline function Decl
+                if isinstance(decl, nodes.FuncType):
+                    ct = decl._ctype
+                    if ct._storage == nodes.Storages.INLINE or ct._storage == nodes.Storages.STATIC:
+                        raise KVisitorError('Functions in Module/class cannot be inline or static')
 

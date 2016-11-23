@@ -69,13 +69,12 @@ class Koocer:
 
     def apply_visitors(self):
         runners = [
-                visitors.linkchecks.LinkChecks(Koocer),
+                visitors.LinkChecks(Koocer),
 
-                #visitors.types.ModuleBuilding(),
-                #visitors.types.ClassBuilding(),
+                visitors.ClassBuilder(),
 
                 #last: type the AST
-                visitors.typing.Typing(),
+                visitors.Typing(),
                 ]
 
         # Register all visitors

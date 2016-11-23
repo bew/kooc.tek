@@ -1,0 +1,7 @@
+@import "myclass.kh"
+
+@implementation MyParent
+{}
+
+@implementation MyClass
+{}
