@@ -15,7 +15,6 @@ from base import DirectiveTestCase
 class DirectiveLookup(DirectiveTestCase):
 
     def test_simple_in_top_level(self):
-        """TODO: doc"""
 
         source = """
             int var = [MyModule.some_variable];
@@ -25,7 +24,6 @@ class DirectiveLookup(DirectiveTestCase):
         self.asserts_for_simple(ast)
 
     def test_simple_in_block(self):
-        """TODO: doc"""
 
         source = """
             int var = [MyModule.some_variable];

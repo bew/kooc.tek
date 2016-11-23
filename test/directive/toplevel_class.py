@@ -134,7 +134,5 @@ class DirectiveClass(DirectiveTestCase):
         self.assertEqual(third_member._name, 'do_something')
         self.assertEqual(len(third_member._ctype._params), 2) # self, callback
 
-    #TODO: tests on virtuals, ........
-
 if __name__ == '__main__':
     unittest.main()

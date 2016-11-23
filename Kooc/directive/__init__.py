@@ -10,8 +10,6 @@ from Kooc.utils import KError
 class KParsingError(KError):
     """Class for parsing error"""
 
-    # TODO: add file position in error
-
 
 class Directive(Grammar, Declaration):
     entry = "translation_unit"

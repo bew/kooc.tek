@@ -7,14 +7,6 @@ from . import KVisitorError, VisitorRunner
 
 # given a class 'Class'
 
-# available functions:
-# From Object:
-# - isKindOf(Class *, Class *other);     -> libkrt: isKindOf
-# - isKindOf(Class *, char *class_name); -> libkrt: isKindOfStr
-# - isInstanceOf(Class *, Class *other);     -> libkrt: isInstanceOf
-# - isInstanceOf(Class *, char *class_name); -> libkrt: isInstanceOfStr
-# FIXME: verify functions types
-
 # ClassBuiltin.alloc: (en gros)
 #--------------------------------
 # return malloc(sizeof(Class))

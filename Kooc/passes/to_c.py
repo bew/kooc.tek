@@ -25,7 +25,6 @@ def to_c(self):
     lsdata.append('#endif\n\n')
     return fmt.sep("\n", lsdata)
 
-# TODO: refactor to_c of implem & module
 @meta.add_method(knodes.KcModule)
 def to_c(self):
     lsdata = []
@@ -89,10 +88,6 @@ def to_c(self):
 def to_c(self):
     ctx = self.context() # self.context is a weakref
 
-    if isinstance(ctx, knodes.KcClass):
-        # thoughts: how is class lookup different from module lookup ?
-        pass # TODO: handle class lookup
-
     if isinstance(ctx, knodes.KcModule):
         # mangle
         mangled_name = mangler.mangle_module(self.member, self.expr_type._ctype, typeName = ctx.name)
@@ -106,9 +101,6 @@ def to_c(self):
 
     raise Exception('Unknown context type: {}'.format(ctx))
 
-#TODO: move this to : from Kooc.passes.typing import get_types
-#TODO: the type (ex: None or PrimaryType or [PrimaryType, ref(PrimaryType)]) must be wrapped in a KExprType
-#      (which allow intersection, merging, etc..)
 def get_types(ast):
     def get_single_type(from_t):
         if isinstance(from_t, weakref.ref):
