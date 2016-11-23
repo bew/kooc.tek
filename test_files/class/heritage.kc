@@ -1,4 +1,4 @@
-@import "myclass.kh"
+@import "heritage.kh"
 
 @implementation MyParent
 {}

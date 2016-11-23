@@ -9,8 +9,7 @@
   }
 
   @member double parent_var = 42.2222;
-  typedef int FizzBuzz;
-  @member FizzBuzz before_var = 0;
+  @member int before_var = 0;
 }
 
 @class MyClass : MyParent

@@ -34,6 +34,8 @@ def to_c(self):
     for func in self.declallfuncs():
         # mangle
         func._name = mangler.mangle_module(func._name, func._ctype, typeName = self.name)
+        if hasattr(func, 'body'):
+            delattr(func, 'body')
 
         lsdata.append(func.to_c())
 
