@@ -1,0 +1,30 @@
+@import "typage_test.kh"
+
+@implementation MyModule
+{
+    int my_function() {
+        return 42;
+    }
+
+    float my_function() {
+        return 0.1337;
+    }
+
+    int my_function(int p) {
+        return 0;
+    }
+
+    float my_function(int p) {
+        return 1 + p;
+    }
+}
+
+int main()
+{
+  int a = [MyModule my_function];
+  float b = [MyModule my_function];
+  float c = [MyModule my_function : [MyModule my_function]];
+
+  printf("%i %f %f\n", a, b, c);
+  //should output 42 0.1337 42.1337
+}

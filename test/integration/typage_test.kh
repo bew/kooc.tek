@@ -1,0 +1,9 @@
+#include <stdio.h>
+
+@module MyModule
+{
+    int my_function();
+    float my_function();
+    float my_function(float);
+    float my_function(int);
+}
