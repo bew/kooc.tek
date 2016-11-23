@@ -1,0 +1,7 @@
+#include <stdio.h>
+
+@module MyModule
+{
+    int var = 42;
+    void my_function();
+}

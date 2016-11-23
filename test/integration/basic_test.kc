@@ -1,0 +1,14 @@
+@import "simple.kh"
+
+@implementation MyModule
+{
+    void my_function() {
+        printf("hello world\n");
+    }
+}
+
+int main()
+{
+  @!(void)[MyModule my_function];
+  return (0);
+}
