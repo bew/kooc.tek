@@ -23,4 +23,5 @@ class VisitorRunner:
 
 from .linkchecks import LinkChecks
 from .typing import Typing
+from .builder import ClassBuilder
 

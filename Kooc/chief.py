@@ -69,13 +69,12 @@ class Koocer:
 
     def apply_visitors(self):
         runners = [
-                visitors.linkchecks.LinkChecks(Koocer),
+                visitors.LinkChecks(Koocer),
 
-                #visitors.types.ModuleBuilding(),
-                #visitors.types.ClassBuilding(),
+                visitors.ClassBuilder(),
 
                 #last: type the AST
-                visitors.typing.Typing(),
+                visitors.Typing(),
                 ]
 
         # Register all visitors
@@ -165,7 +164,6 @@ class ChiefKooc:
         else:
             return False
 
-    # FIXME: this function should return a dict of (file => ast)
     def run_just_parse(self):
         for fpath in self.files:
             print()
@@ -184,7 +182,6 @@ class ChiefKooc:
             self.run_just_parse()
             return
 
-        # TODO: move this in other function
         for fpath_in in self.files:
             print()
             print("====================================")

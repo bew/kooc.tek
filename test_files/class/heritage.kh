@@ -1,0 +1,25 @@
+@class MyParent
+{
+  @member {
+    void parent_do_stuff();
+  }
+
+  @virtual {
+    void virtual_do_stuff();
+  }
+
+  @member double parent_var = 42.2222;
+  typedef int FizzBuzz;
+  @member FizzBuzz before_var = 0;
+}
+
+@class MyClass : MyParent
+{
+  @member int var;
+  @member float var = 4.2;
+
+  int class_function();
+
+  @member void instance_func();
+  @virtual int myclass_virtual();
+}

@@ -15,7 +15,6 @@ from base import DirectiveTestCase
 class DirectiveCall(DirectiveTestCase):
 
     def test_static_call(self):
-        """TODO: doc"""
 
         source = """
             int a = [MyModule some_function];

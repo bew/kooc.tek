@@ -4,8 +4,6 @@ from cnorm import nodes
 from Kooc import knodes
 from weakref import ref
 
-# TODO: rename visitor to 'all_exprs' ?
-
 def yield_if_expr_rec(maybe_expr, parent):
     if not isinstance(maybe_expr, Node):
         return

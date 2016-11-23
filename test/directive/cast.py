@@ -27,8 +27,8 @@ class DirectiveCast(DirectiveTestCase):
         kexpr = expr_stmt.expr
         self.assertIsInstance(kexpr, knodes.KcLookup)
 
-        self.assertIsInstance(kexpr.expr_type, nodes.Decl)
-        self.assertEqual(kexpr.expr_type._ctype._identifier, 'int')
+        self.assertIsInstance(kexpr.expr_type, nodes.PrimaryType)
+        self.assertEqual(kexpr.expr_type._identifier, 'int')
 
     def test_assign_to(self):
         """C type assignation to a kooc cast"""
@@ -46,8 +46,8 @@ class DirectiveCast(DirectiveTestCase):
         value = bin_expr.params[1] # assign what
 
         self.assertIsInstance(kexpr, knodes.KcLookup)
-        self.assertIsInstance(kexpr.expr_type, nodes.Decl)
-        self.assertEqual(kexpr.expr_type._ctype._identifier, 'int')
+        self.assertIsInstance(kexpr.expr_type, nodes.PrimaryType)
+        self.assertEqual(kexpr.expr_type._identifier, 'int')
 
     def test_cannot_cast_non_kooc_expr(self):
         """Parsing must fails on Kooc casting a non Kooc expression"""

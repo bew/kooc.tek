@@ -25,11 +25,10 @@ def to_c(self):
     lsdata.append('#endif\n\n')
     return fmt.sep("\n", lsdata)
 
-# TODO: refactor to_c of implem & module
 @meta.add_method(knodes.KcModule)
 def to_c(self):
     lsdata = []
-    lsdata.append('// begin of module\n')
+    lsdata.append('// begin of module ' + self.name + ' header\n')
 
     # - generate function prototypes
     for func in self.declallfuncs():
@@ -51,26 +50,24 @@ def to_c(self):
 
         lsdata.append(var.to_c())
 
-    lsdata.append('// end of module\n\n')
+    lsdata.append('// end of module ' + self.name + ' header\n')
     return fmt.sep("\n", lsdata)
 
-@meta.add_method(knodes.KcImplementation)
+@meta.add_method(knodes.KcModuleImplementation)
 def to_c(self):
     lsdata = []
-    lsdata.append('// begin of implem\n')
+    lsdata.append('// begin of module ' + self.name + ' implem\n')
 
     # - generate function prototypes
     for func in self.declallfuncs():
         # mangle
         func._name = mangler.mangle_module(func._name, func._ctype, typeName = self.name)
-
         lsdata.append(func.to_c())
 
     # - generate variable declarations & definition if needed
     for var in self.declallvars():
         # mangle
         var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
-
         lsdata.append(var.to_c())
 
     # - generate variable definition from module/class
@@ -81,30 +78,20 @@ def to_c(self):
 
         # mangle
         var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
-
         lsdata.append(var.to_c())
 
-
-
-    lsdata.append('// end of implem\n\n')
+    lsdata.append('// end of module ' + self.name + ' implem\n')
 
     return fmt.sep("\n", lsdata)
 
 @meta.add_method(knodes.KcLookup)
 def to_c(self):
-    # find type of context
     ctx = self.context() # self.context is a weakref
 
-    if isinstance(ctx, knodes.KcClass):
-        # thoughts: how is class lookup different from module lookup ?
-        pass # TODO: handle class lookup
-
     if isinstance(ctx, knodes.KcModule):
-
-        # mangle member:
+        # mangle
         mangled_name = mangler.mangle_module(self.member, self.expr_type._ctype, typeName = ctx.name)
-
-        return nodes.Id(mangled_name).to_c() # or just return mangled_name ?
+        return nodes.Id(mangled_name).to_c()
 
 
     # later: handle class instance, check class via expr_type of context
@@ -114,9 +101,6 @@ def to_c(self):
 
     raise Exception('Unknown context type: {}'.format(ctx))
 
-#TODO: move this to : from Kooc.passes.typing import get_types
-#TODO: the type (ex: None or PrimaryType or [PrimaryType, ref(PrimaryType)]) must be wrapped in a KExprType
-#      (which allow intersection, merging, etc..)
 def get_types(ast):
     def get_single_type(from_t):
         if isinstance(from_t, weakref.ref):
@@ -159,6 +143,52 @@ def to_c(self):
     # later: handle class instance
     # - assert context is class instance : any pointer(KType)
     # - get klass of KType
-    # - do stuff
+    # - find method
+    # - method is virtual ? use vtable
+    # - method is not virtual ? use direct function call
 
     raise Exception('Unknown context type: {}'.format(ctx))
+
+# KcClass
+#--------------------------------
+
+@meta.add_method(knodes.KcClass)
+def to_c(self):
+    # generate header for the class
+    class_lsdata = []
+    class_lsdata.append('// begin of class ' + self.name + ' header')
+
+    # Fast forward declaration of metadata
+    metadata_forward_decl = copy.deepcopy(self.structs['metadata'])
+    if hasattr(metadata_forward_decl._ctype, 'fields'):
+        delattr(metadata_forward_decl._ctype, 'fields')
+
+    class_lsdata.append(metadata_forward_decl.to_c())
+    class_lsdata.append(self.structs['instance'].to_c())
+    class_lsdata.append(self.structs['interface'].to_c())
+    class_lsdata.append(self.typedef.to_c())
+
+    class_lsdata.append('// end of class ' + self.name + ' header\n')
+    return fmt.sep('\n', class_lsdata)
+
+
+@meta.add_method(knodes.KcClassImplementation)
+def to_c(self):
+    # generate implemention for the class
+    implem_lsdata = []
+    implem_lsdata.append('// begin of class ' + self.name + ' implem')
+
+    klass = self.bind_mc()
+
+    print('klass for ' + klass.name + 'implem:', klass.to_yml())
+
+    implem_lsdata.append(klass.structs['vtable'].to_c())
+    implem_lsdata.append(klass.structs['metadata'].to_c())
+    implem_lsdata.append('// end of class ' + self.name + ' implem\n')
+    return fmt.sep('\n', implem_lsdata)
+
+# Helper functions
+#--------------------------------
+
+# ?
+

@@ -72,29 +72,32 @@ class KcImplementation(nodes.BlockStmt, KcTopLevel):
         self.__class__ = KcImplementation
         self.name = name
 
+class KcModuleImplementation(KcImplementation):
+    """@implementation for a module"""
+
+class KcClassImplementation(KcImplementation):
+    """@implementation for a class"""
+
 class KcClass(KcModule):
     """@class node"""
 
     def __init__(self, name):
         KcModule.__init__(self, name)
-        self.parents = {}
-        self.members = []
-        self.virtuals = []
+        self.parents = []
 
     def init_from_blockstmt(self, name):
-        KcModule.__init__(self, name)
+        KcModule.init_from_blockstmt(self, name)
         self.__class__ = KcClass
-        if not hasattr(self, "parents"):
-            self.parents = {}
-        if not hasattr(self, "members"):
-            self.members = []
-        if not hasattr(self, "virtuals"):
-            self.virtuals = []
+        self.parents = []
 
-    def add_parent(self, parent): # FIXME: needed here ?
-        if parent.name in self.parents:
-            return True
-        self.parents[parent.name] = ref(parent)
+class KcMemberDecl(nodes.Decl):
+    """class member decl (variable, not function)"""
+
+class KcMethodDecl(nodes.Decl):
+    """class method decl"""
+
+class KcVirtualDecl(nodes.Decl):
+    """class method decl"""
 
 # Misc
 #--------------------------------
