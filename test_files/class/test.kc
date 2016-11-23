@@ -1,4 +1,4 @@
-@import "Test.kh"
+@import "test.kh"
 
 @implementation Test
 {

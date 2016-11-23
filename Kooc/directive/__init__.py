@@ -101,9 +101,19 @@ class Directive(Grammar, Declaration):
         ]
 
         kc_at_implementation = [
-            "@implementation" kc_id :name
-            Statement.compound_statement :block
+            "@implementation" kc_id :name #kc_add_typename(current_block, name)
+            kc_implem_block :block
             #kc_new_implementation(current_block, name, block)
+        ]
+
+        kc_implem_block = [
+            '{'
+                __scope__ :current_block #new_blockstmt(_, current_block)
+                [
+                    Declaration.declaration
+                    | kc_at_member #kc_add_member(current_block)
+                ]*
+            '}'
         ]
 
         kc_at_class = [
@@ -220,6 +230,7 @@ def kc_call_params_add(self, ast, expr):
 def kc_new_import(self, current_block, name_node):
     # Form kheader path, header result
     module_path = self.value(name_node)[1:-1]
+
 
     if module_path.endswith('.kh'):
         header_path = module_path.replace('.kh', '.h')

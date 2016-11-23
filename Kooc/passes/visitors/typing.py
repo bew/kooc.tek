@@ -15,26 +15,26 @@ class Typing(VisitorRunner):
 
     typed_literal = TypedLiteral()
     ignored_expression = [nodes.Raw]
-    
+
     def register(self):
         """Register all the visitors for the runner"""
         self.register_visitor(self.type_c_cast)
-        self.register_visitor(self.resolve_expr_context)
         self.register_visitor(self.resolve)
         self.register_visitor(self.check_and_apply)
+        self.register_visitor(self.resolve_expr_context)
 
-        
+
     def resolve(self):
         """Resolve all the invariance possibilities"""
         for expr in self.ast.yield_expr():
             self.choose_resolve_method(expr)
 
-            
+
     def resolve_KcCall(self, kccall_expr):
         """Resolve the typing for a KcCall node"""
         if (self.is_typed(kccall_expr)):
             return kccall_expr
-        
+
         kccall_expr.params = self.resolve_params(kccall_expr.params)
         kccall_expr_type = list()
         kccall_name = kccall_expr.function
@@ -54,18 +54,18 @@ class Typing(VisitorRunner):
                 kccall_expr.expr_type = kccall_expr_type[0]
             else:
                 kccall_expr.expr_type = kccall_expr_type
-                
+
         return kccall_expr
 
-                    
+
     def resolve_KcLookup(self, kclookup_expr):
         """Resolve the typing for KcLookup node"""
         if self.is_typed(kclookup_expr) is True:
             return kclookup_expr
-        
+
         kclookup_expr_type = list()
         kclookup_name = kclookup_expr.member
-        
+
         # Search among the context the KcLookup declarations by it's name and add the expr_type found
         for decl in kclookup_expr.context().body:
             if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
@@ -81,15 +81,15 @@ class Typing(VisitorRunner):
                 kclookup_expr.expr_type = kclookup_expr_type[0]
             else:
                 kclookup_expr.expr_type = kclookup_expr_type
-            
+
         return kclookup_expr
 
-    
+
     def resolve_Literal(self, literal_expr):
         """Resolve the typing for Literal node"""
         return self.typed_literal.parse(literal_expr.value)
 
-    
+
     def resolve_Id(self, id_expr):
         """Resolve the typing for an Id node"""
         if (self.is_typed(id_expr)):
@@ -110,13 +110,13 @@ class Typing(VisitorRunner):
                     else:
                         raise KVisitorError("Multiple definition of Id for the same signature for '"+ id_name +"'")
             root = self.get_root(root)
-                    
+
         # Check if a type has been found and set it
         if id_expr_type is None:
             raise KVisitorError("Cant find any definition of Id '"+ id_name +"'")
         else:
             id_expr.expr_type = id_expr_type
-            
+
         return id_expr
 
 
@@ -130,10 +130,10 @@ class Typing(VisitorRunner):
 
         if isinstance(binary_expr.expr_type, list) is not True:
             binary_expr = self.set(binary_expr, binary_expr.expr_type)
-            
+
         return binary_expr
 
-    
+
     def resolve_Ternary(self, ternary_expr):
         """Resolve the typing for a Ternary node"""
         if (self.is_typed(ternary_expr)):
@@ -147,7 +147,7 @@ class Typing(VisitorRunner):
 
         return ternary_expr
 
-    
+
     def resolve_Paren_Unary(self, paren_unary_expr):
         """Resolve the typing for a Paren or a Unary node"""
         if (self.is_typed(paren_unary_expr)):
@@ -182,13 +182,13 @@ class Typing(VisitorRunner):
                     else:
                         raise KVisitorError("Multiple definition of Func for the same signature for '"+ func_name +"'")
             root = self.get_root(root)
-                    
+
         # Check if a type has been found and set it
         if func_expr_type is None:
             raise KVisitorError("Cant find any definition of Func '"+ func_name +"'")
         else:
             func_expr.expr_type = func_expr_type
-            
+
         return func_expr
 
 
@@ -215,32 +215,32 @@ class Typing(VisitorRunner):
             kccall_expr.params[key].expr_type = expr_type
         return kccall_expr
 
-    
+
     def set_KcLookup(self, kclookup_expr, expr_type):
         kclookup_expr.expr_type = expr_type
         return kclookup_expr
 
-    
+
     def set_Binary(self, binary_expr, expr_type):
         binary_expr.expr_type = expr_type
         binary_expr.params[0] = self.set(binary_expr.params[0], expr_type)
         binary_expr.params[1] = self.set(binary_expr.params[1], expr_type)
         return binary_expr
 
-    
+
     def set_Ternary(self, ternary_expr, expr_type):
         ternary_expr.expr_type = expr_type
         ternary_expr.params[1] = self.set(ternary_expr.params[1], expr_type)
         ternary_expr.params[2] = self.set(ternary_expr.params[2], expr_type)
         return ternary_expr
 
-    
+
     def set_Paren_Unary(self, paren_unary_expr, expr_type):
         paren_unary_expr.expr_type = expr_type
         paren_unary_expr.params[0] = self.set(paren_unary_expr.params[0], expr_type)
         return paren_unary_expr
 
-    
+
     # ~~~~~~~~~~ Utils ~~~~~~~~~~
 
     def choose_resolve_method(self, expr):
@@ -272,14 +272,14 @@ class Typing(VisitorRunner):
         else:
             return False
 
-        
+
     def resolve_params(self, params):
         """Resolve the types of the params"""
         for key, param in enumerate(params):
             params[key] = self.choose_resolve_method(param)
         return params
 
-        
+
     def get_root(self, expr):
         """Get the root (BlockStmt) from the given expression by accessing the parents"""
         if isinstance(expr, nodes.RootBlockStmt):
@@ -311,7 +311,7 @@ class Typing(VisitorRunner):
         for expr in self.ast.yield_expr():
             self.check_and_apply_loop(expr)
 
-            
+
     def check_and_apply_loop(self, expr):
         if hasattr(expr, "expr_type") is True:
             if isinstance(expr.expr_type, list) is True:
@@ -334,7 +334,7 @@ class Typing(VisitorRunner):
             for sub_second_expr_type in second_expr_type_list:
                 if sub_first_expr_type.__dict__ == sub_second_expr_type.__dict__:
                     expr_type.append(sub_first_expr_type)
-                    
+
         if len(expr_type) <= 0:
             raise KVisitorError("The both expr_type don't have any match")
         else:
@@ -343,7 +343,7 @@ class Typing(VisitorRunner):
             else:
                 return expr_type
 
-            
+
     def get_matches_expr_type_list(self, first_expr_type, second_expr_type_list):
         """Get the matches expression_type between an expression_type and a list of expression_type"""
         expr_type = None
@@ -353,13 +353,13 @@ class Typing(VisitorRunner):
                     raise KVisitorError("Multiple type is not authorized")
                 else:
                     expr_type = first_expr_type
-                    
+
         if expr_type is None:
             raise KVisitorError("The both expr_type don't have any match")
         else:
             return expr_type
 
-        
+
     def get_matches_expr_type(self, first_expr_type, second_expr_type):
         """Get the matches expression_type between two expression_type (can be list)"""
         if isinstance(first_expr_type, list) is True and isinstance(second_expr_type, list) is True:
@@ -374,9 +374,9 @@ class Typing(VisitorRunner):
             else:
                 return first_expr_type
 
-            
+
     # ~~~~~~~~~~ Shit of Lesell ~~~~~~~~~~
-    
+
     def resolve_expr_context(self):
         for expr in self.ast.yield_expr():
             if not isinstance(expr, knodes.KcExpr): # limit to KcCall & KcLookup
