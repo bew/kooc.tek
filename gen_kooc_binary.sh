@@ -11,8 +11,8 @@ function check_folder
 
 function generate_kooc
 {
-	echo "$PWD/kooc.py" '$*' > kooc
-	chmod +x kooc
+	echo -e "#!/bin/sh\n$PWD/kooc.py" '$*' > koocexe
+	chmod +x koocexe
 }
 
 check_folder
