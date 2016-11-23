@@ -90,7 +90,7 @@ def to_c(self):
 
     if isinstance(ctx, knodes.KcModule):
         # mangle
-        mangled_name = mangler.mangle_module(self.member, self.expr_type._ctype, typeName = ctx.name)
+        mangled_name = mangler.mangle_module(self.member, self.expr_type, typeName = ctx.name)
         return nodes.Id(mangled_name).to_c()
 
 
@@ -133,7 +133,7 @@ def to_c(self):
             pass
 
         # mangle
-        func_ctype = nodes.FuncType(self.expr_type._ctype._identifier, params_types)
+        func_ctype = nodes.FuncType(self.expr_type._identifier, params_types)
         mangled_name = mangler.mangle_module(self.function, func_ctype, typeName = ctx.name)
 
         # create fake function call

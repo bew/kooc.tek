@@ -51,14 +51,14 @@ class Directive(Grammar, Declaration):
         ]
 
         kc_expr_context = [
-            kc_id
-            //| primary_expression //TODO: later, handle expr as context
+            kc_id :id #kc_is_typename(id, current_block)
+            | primary_expression
         ]
 
         // [Module.variable]
         // [Module.var1.subvar] Besoin de le gerer ? (later)
         kc_lookup = [
-            kc_expr_context :ctx '.' Base.id :member
+            kc_expr_context :ctx '.' kc_id :member
             #kc_set_lookup(_, ctx, member)
         ]
 
@@ -270,6 +270,16 @@ def kc_add_typename(self, current_block, name_node):
     # add this type in cnorm type system
     current_block.ref.types[typename] = True
     return True
+
+@meta.hook(Directive)
+def kc_is_typename(self, id_node, current_block):
+    id = self.value(id_node)
+
+    print('in expr, id:', id)
+    print('id is in types (', current_block.ref.types, ') ?', id in current_block.ref.types)
+
+    return id in current_block.ref.types
+
 
 @meta.hook(Directive)
 def kc_inheritance_add_parent(self, ast, name_node):
