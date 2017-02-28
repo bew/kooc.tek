@@ -11,14 +11,17 @@ function check_folder
 
 function generate_kooc
 {
-	echo -e "#!/bin/sh\n$PWD/kooc.py" '$*' > koocexe
-	chmod +x koocexe
+	echo -e "#!/bin/sh\n$PWD/kooc.py" '$*' > "$KOOC_NAME"
+	chmod +x "$KOOC_NAME"
 }
+
+KOOC_NAME=kooc
 
 check_folder
 generate_kooc
 
-echo "Standalone 'kooc' binary generated"
+echo "Standalone '$KOOC_NAME' binary generated"
 echo "You can now move it where you want and execute it:"
-echo "   $ cp kooc ~/.bin"
-echo "   $ kooc some.kh files.kc      # Assuming ~/.bin is in your PATH"
+echo "   $ cp $KOOC_NAME ~/.bin"
+echo "   $ $KOOC_NAME some.kh files.kc      # Assuming ~/.bin is in your PATH"
+
