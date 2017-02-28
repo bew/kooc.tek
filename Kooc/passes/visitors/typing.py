@@ -287,7 +287,8 @@ class Typing(VisitorRunner):
             for decl in root.body:
                 if isinstance(decl, nodes.Decl) is not True or hasattr(decl, "_name") is not True:
                     continue
-                elif decl._name == func_name and func_expr.expr_type._identifier == decl._ctype._identifier:
+
+                elif decl._name == func_name and func_expr.expr_type._identifier == decl._ctype._identifier and len(func_expr.params) == len(decl._ctype.params):
                     for key, param in enumerate(func_expr.params):
                         func_expr.params[key] = self.set(param, decl._ctype._params[key]._ctype)
                     break

@@ -44,7 +44,8 @@ def to_c(self):
         var = copy.deepcopy(v)
 
         # mangle
-        var._name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
+        #name = mangler.mangle_module(var._name, var._ctype, typeName = self.name)
+        #print('name variable after mangling:', name)
 
         # transform to extern declaration
         var._ctype._storage = nodes.Storages.EXTERN

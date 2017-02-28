@@ -173,6 +173,7 @@ class ChiefKooc:
 
             koocer = Koocer(fpath)
             koocer.parse()
+            koocer.apply_visitors()
 
             print("#    AST    #")
             print(koocer.ast.to_yml())
