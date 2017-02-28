@@ -1,13 +1,25 @@
 #include <stdio.h>
 
 @import "simple.kh"
+@import "simple.kh"
 
 @implementation MyModule
 {
 
-void my_function()
+void my_function(int a)
 {
-  printf("hello world\n");
+  printf("hello world %d\n", a);
+}
+
+void my_function(double f)
+{
+  printf("hello world %f\n", f);
+}
+
+void my_function(char a, char b)
+{
+  printf("hello world %c %c\n", a, b);
 }
 
 }
+

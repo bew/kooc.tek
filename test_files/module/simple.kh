@@ -1,5 +1,16 @@
+
 @module MyModule
 {
 int var = 42;
-void my_function();
+double var = 42.42;
+char var = 3;
+
+int pouet = 9999;
+char pouet = 'B';
+
+void my_function(char, char);
+void my_function(int);
+void my_function(double);
 }
+
+typedef int Bla;

@@ -2,6 +2,10 @@
 
 int main()
 {
-  @!(void)[MyModule my_function];
+  [MyModule my_function :'a' :'b'];
+  [MyModule my_function :40 + 2];
+  [MyModule my_function :[MyModule.pouet]];
+
+  [MyModule.pouet] = 'a';
   return (0);
 }
